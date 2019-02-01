@@ -33,7 +33,7 @@ private:
     void setKBValues(const std::vector<int>& assignments);
     void planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan);
     void generatePlans(int i, std::vector<int>& assignments);
-
+    std::vector<int> getAssignIndex();
 public:
     PlanSpaceGenerator(ros::NodeHandle& nh);
     ~PlanSpaceGenerator() = default;

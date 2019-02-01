@@ -120,6 +120,11 @@ void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
             // WRITE TO FILE
             std::ofstream outfile;
             outfile.open(_out_file, std::ios::out | std::ios::app);
+            /*for (int i = 0; i < assignments.size(); ++i) {
+                if (i > 0) outfile << ", ";
+                outfile << assignments[i];
+            }
+            outfile << " | ";*/
             for (int i = 0; i < assignments.size(); ++i) {
                 if (i > 0) outfile << ", ";
                 outfile << _pref_types[i].first << "=" << _type_values[_pref_types[i].second][assignments[i]];
@@ -147,7 +152,8 @@ void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
 
     // List of all preferences
     // For all preferences of the type
-    for (int v = 0; v < _type_values[_pref_types[i].second].size(); ++v) {
+    int n = _type_values[_pref_types[i].second].size();
+    for (int v = (assignments[i])%n; v < n; ++v) {
         // For all values of the preference
         assignments[i] = v;
         // Set KB
@@ -155,6 +161,7 @@ void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
         // Recursive call
         generatePlans(i+1, assignments);
         // Unset KB
+        assignments[i] = 0;
         //not needed setKBValue(_pref_types[i].first, _pref_types[i].second, v, false);
     }
 
@@ -194,8 +201,39 @@ void PlanSpaceGenerator::planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan
 }
 
 void PlanSpaceGenerator::generatePlans() {
-    std::vector<int> assign(_pref_types.size(), -1);
+    std::vector<int> assign(_pref_types.size(), 0);
+    //assign = getAssignIndex();
     generatePlans(0, assign);
+}
+
+std::vector<int> PlanSpaceGenerator::getAssignIndex() {
+    std::vector<std::pair<std::string, std::string>> init =
+            {{"p_motor_rightleg", "@tl_unknown"},
+            {"p_motor_leftleg", "@tl_unknown"},
+            {"p_motor_rightfoot", "@tl_unknown"},
+            {"p_motor_leftfoot", "@med"},
+            {"p_speed", "@high"},
+            {"p_force", "@med"},
+            {"p_information_providing", "@ip_never"},
+            {"p_petitions", "@p_never"}};
+
+    std::vector<int> assign(init.size());
+    for (int i = 0; i < init.size(); ++i) {
+        std::string t;
+        for (int k = 0; k < _pref_types.size(); ++k) {
+            if (_pref_types[k].first == init[i].first) {
+                t = _pref_types[k].second;
+                break;
+            };
+        }
+        for (int j = 0; j < _type_values[t].size();++j) {
+            if (_type_values[t][j] == init[i].second) {
+                assign[i] = j;
+                break;
+            }
+        }
+    }
+    return assign;
 }
 
 
