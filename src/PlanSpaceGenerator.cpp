@@ -74,9 +74,16 @@ void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
             }
 
             // WAIT FOR PLAN
+            int tries = 0;
             while (_plan.empty()) {
                 ros::spinOnce();
                 ros::Duration(0.15).sleep();
+                ++tries;
+                if (tries > 50) {
+                    --k;
+                    ROS_WARN("TIMEOUT WAITING FOR PLAN!!");
+                    break;
+                }
             }
             //ROS_INFO_STREAM("Created plan for preference...");
             // Check if goal
@@ -154,6 +161,7 @@ void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
     // For all preferences of the type
     int n = _type_values[_pref_types[i].second].size();
     for (int v = (assignments[i])%n; v < n; ++v) {
+        if (_type_values[_pref_types[i].second][v].find("unknown") != std::string::npos) continue; // Ignore unknown values!
         // For all values of the preference
         assignments[i] = v;
         // Set KB
@@ -209,13 +217,13 @@ void PlanSpaceGenerator::generatePlans() {
 std::vector<int> PlanSpaceGenerator::getAssignIndex() {
     std::vector<std::pair<std::string, std::string>> init =
             {{"p_motor_rightleg", "@tl_unknown"},
-            {"p_motor_leftleg", "@tl_unknown"},
-            {"p_motor_rightfoot", "@tl_unknown"},
-            {"p_motor_leftfoot", "@med"},
-            {"p_speed", "@high"},
-            {"p_force", "@med"},
-            {"p_information_providing", "@ip_never"},
-            {"p_petitions", "@p_never"}};
+             {"p_motor_leftleg", "@tl_unknown"},
+             {"p_motor_rightfoot", "@tl_unknown"},
+             {"p_motor_leftfoot", "@med"},
+             {"p_speed", "@tl_unknown"},
+             {"p_force", "@med"},
+             {"p_information_providing", "@ip_wneeded"},
+             {"p_petitions", "@p_always"}};
 
     std::vector<int> assign(init.size());
     for (int i = 0; i < init.size(); ++i) {
