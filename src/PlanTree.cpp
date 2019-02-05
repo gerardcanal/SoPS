@@ -5,6 +5,33 @@
 #include <PlanTree.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// StateDict class
+// Static members
+std::map<std::string, std::vector<std::string>> StateDict::_type_values;
+std::map<std::string, std::pair<std::string, int>> StateDict::_state_types;
+std::vector<State> StateDict::_states;
+std::regex StateDict::re_csv("([^,=]+)=([^,=]+)(:?,\\s?)?"); // [^,=] means "not , or =". Matches: (.*)=(.*),?
+
+int StateDict::getIndex(const std::vector<std::string>& v, const std::string& s) {
+    return int(std::find(v.begin(), v.end(), s) - v.begin());
+}
+
+int StateDict::addState(const std::string& s) {
+    // s has format pred=val, pred=val...
+    State newstate(_state_types.size());
+
+    std::smatch m;
+    std::regex_iterator<std::string::const_iterator> rend;
+    for (auto rit = std::regex_iterator<std::string::const_iterator>(s.begin(), s.end(), re_csv); rit != rend; ++rit) {
+        // rit->str(i) returns ith match. 1 is the predicate, 2 is the value
+
+        std::cout << rit->str(1) << " -- " << rit->str(2) << std::endl;
+        int i = getIndex(_type_values[_state_types[rit->str(1)].first], rit->str(2));
+        //TODO newstate[] = i;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionDict class
 
 // Static members
@@ -48,9 +75,12 @@ _Node::~_Node() {
 }
 
 
-void _Node::addChild(int a_id, double reward) {
+void _Node::addChild(int a_id, double reward, int state) {
     if (hasChild(a_id)) { // node already exists
-        if (max_rewards[a_id] < reward) max_rewards[a_id] = reward;
+        if (max_rewards[a_id] < reward) {
+            max_rewards[a_id] = reward;
+            states[a_id] = state;
+        }
     }
     else {
         children[a_id] = std::make_shared<_Node>(a_id); // new node
@@ -79,8 +109,28 @@ PlanTree::PlanTree(const std::string &planspace_path) : PlanTree() {
     loadTreeFromFile(planspace_path);
 }
 
+void PlanTree::loadTreeFromFile(const std::string &planspace_path) {
+    std::ifstream planspace_file;
+    planspace_file.open(planspace_path);
+
+    // Regular expressions to parse lines.
+    std::regex sections("(.*)\\|(.*)\\|(.*)");
+    std::regex csv("(.*, )");
+
+    std::string line;
+    while (std::getline(planspace_file, line)) {
+        // Parse line. Format is: "pref=val, pref=val | action1, action2 | R"
+        std::smatch m;
+        if (not std::regex_search(line, m, sections)) continue;
+        StateDict::addState(m[1]); // State
+        //m[2]; // Action sequence / plan
+        double reward = std::stod(m[3]); // Reward
+
+        // Insert in tree
+    }
+
+    planspace_file.close();
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char* argv[]) {
-    std::cout << "Hello" << std::endl;
-}
