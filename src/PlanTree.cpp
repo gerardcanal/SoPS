@@ -8,15 +8,20 @@
 // StateDict class
 // Static members
 std::map<std::string, std::vector<std::string>> StateDict::_type_values;
-std::map<std::string, std::pair<std::string, int>> StateDict::_state_types;
+std::map<std::string, std::pair<std::string, size_t>> StateDict::_state_types;
 std::vector<State> StateDict::_states;
-std::regex StateDict::re_csv("([^,=]+)=([^,=]+)(:?,\\s?)?"); // [^,=] means "not , or =". Matches: (.*)=(.*),?
+std::map<State, size_t> StateDict::_states_ids;
+std::regex StateDict::re_csv("([^,=]+)=([^,=]+)(:?,)?\\s?"); // [^,=] means "not , or =". Matches: (.*)=(.*),?
+bool StateDict::init = false;
 
-int StateDict::getIndex(const std::vector<std::string>& v, const std::string& s) {
-    return int(std::find(v.begin(), v.end(), s) - v.begin());
+size_t StateDict::getIndex(const std::vector<std::string>& v, const std::string& s) {
+    auto i = std::find(v.begin(), v.end(), s);
+    assert(i != v.end());
+    return (i - v.begin());
 }
 
-int StateDict::addState(const std::string& s) {
+State StateDict::parseState(const std::string& s) {
+    assert(init);
     // s has format pred=val, pred=val...
     State newstate(_state_types.size());
 
@@ -24,23 +29,94 @@ int StateDict::addState(const std::string& s) {
     std::regex_iterator<std::string::const_iterator> rend;
     for (auto rit = std::regex_iterator<std::string::const_iterator>(s.begin(), s.end(), re_csv); rit != rend; ++rit) {
         // rit->str(i) returns ith match. 1 is the predicate, 2 is the value
-
-        std::cout << rit->str(1) << " -- " << rit->str(2) << std::endl;
-        int i = getIndex(_type_values[_state_types[rit->str(1)].first], rit->str(2));
-        //TODO newstate[] = i;
+        //std::cout << "'" << rit->str(1) << "' -- '" << rit->str(2) << "'" <<  std::endl;
+        size_t i = getIndex(_type_values[_state_types[rit->str(1)].first], rit->str(2));
+        newstate[_state_types[rit->str(1)].second] = int(i);
     }
+    return newstate;
+}
+
+size_t StateDict::addState(const State& s) {
+    size_t i = _states.size();
+    _states.push_back(s);
+    _states_ids[s] = i;
+    return i;
+}
+
+void StateDict::loadPredicates(const std::string &path) {
+    std::ifstream pred_definiton_file;
+    pred_definiton_file.open(path);
+
+    // Regular expressions to parse lines.
+    std::regex re_type("([^:]+):"); // Format type: val1, val2, val3...
+    std::regex re_type_list("(?:[^:]+:\\s?)?([^,]+)(?:,\\s?)?"); // Format type: val1, val2, val3...
+    std::regex re_pred("([^:]+):\\s?([^\\s]*)"); // Format pred: type
+
+    std::string line;
+    bool parsing_types = false;
+    bool parsing_preds = false;
+    std::regex_iterator<std::string::const_iterator> rend;
+    std::smatch m;
+    int pid = 0;
+    while (std::getline(pred_definiton_file, line)) {
+        if (line == "TYPES") {
+            parsing_types = true;
+            parsing_preds = false;
+        }
+        else if (line == "PREDICATES") {
+            parsing_preds = true;
+            parsing_types = false;
+            pid = 0;
+        }
+
+        else if (parsing_types) {
+            if (not std::regex_search(line, m, re_type)) continue;
+            std::string type = m[1];
+            for (auto rit = std::regex_iterator<std::string::const_iterator>(line.begin(), line.end(), re_type_list);
+                    rit != rend; ++rit) {
+                _type_values[type].push_back(rit->str(1));
+            }
+        }
+        else if (parsing_preds) {
+            if (not std::regex_search(line, m, re_pred)) continue;
+            _state_types[m[1]] = {m[2], pid++};
+        }
+    }
+    pred_definiton_file.close();
+    init = true;
+}
+
+size_t StateDict::numStateOptions() { // Computes the number of options
+    size_t ret = 1;
+    for (auto it: _state_types) {
+        ret *= (_type_values[it.second.first].size() -1); // Remove the unknowns
+    }
+    return ret;
+}
+
+void StateDict::initialize(size_t n) {
+    _states.reserve(n);
+}
+
+bool StateDict::hasState(const State &s) {
+    return _states_ids.find(s) != _states_ids.end();;
+}
+
+size_t StateDict::getStateId(const State &s) {
+    assert(hasState(s));
+    return _states_ids[s];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionDict class
 
 // Static members
-std::map<std::string, int> ActionDict::_action_ids;
+std::map<std::string, size_t> ActionDict::_action_ids;
 std::vector<std::string> ActionDict::_actions;
 
-int ActionDict::addAction(const std::string &a) {
+size_t ActionDict::addAction(const std::string &a) {
     if (!hasAction(a)) {
-        int i = (int)_actions.size();
+        size_t i = _actions.size();
         _action_ids[a] = i; // That's the index of the next added action
         _actions.push_back(a); // Add the action
         return i;
@@ -49,11 +125,11 @@ int ActionDict::addAction(const std::string &a) {
 }
 
 std::string ActionDict::getAction(int i) {
-    assert(i < _actions.size());
+    assert(size_t(i) < _actions.size());
     return _actions[i];
 }
 
-int ActionDict::getActionId(const std::string &a) {
+size_t ActionDict::getActionId(const std::string &a) {
     assert(hasAction(a));
     return _action_ids[a];
 }
@@ -114,17 +190,36 @@ void PlanTree::loadTreeFromFile(const std::string &planspace_path) {
     planspace_file.open(planspace_path);
 
     // Regular expressions to parse lines.
-    std::regex sections("(.*)\\|(.*)\\|(.*)");
-    std::regex csv("(.*, )");
+    std::regex sections("(.*) \\| (.*) \\| (.*)");
+    std::regex action_separator("([^;]*)(?:;\\s?)?");
 
-    std::string line;
+    size_t numplans = StateDict::numStateOptions();
+    StateDict::initialize(numplans);
+
+    std::string line, str_plan;
+    std::regex_iterator<std::string::const_iterator> rend;
+
     while (std::getline(planspace_file, line)) {
         // Parse line. Format is: "pref=val, pref=val | action1, action2 | R"
         std::smatch m;
         if (not std::regex_search(line, m, sections)) continue;
-        StateDict::addState(m[1]); // State
-        //m[2]; // Action sequence / plan
+        State state = StateDict::parseState(m[1]);
         double reward = std::stod(m[3]); // Reward
+
+        size_t state_id;
+        if (StateDict::hasState(state)) {
+
+        }
+        else {
+            state_id = StateDict::addState(state); // State
+        }
+
+        std::vector<std::string> plan;
+        str_plan = m[2]; // Action sequence / plan
+        for (auto rit = std::regex_iterator<std::string::const_iterator>(str_plan.begin(), str_plan.end(), action_separator); rit != rend; ++rit) {
+            if (rit->str(1).empty()) continue;
+            plan.push_back(rit->str(1));
+        }
 
         // Insert in tree
     }
