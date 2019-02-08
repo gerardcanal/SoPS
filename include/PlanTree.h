@@ -17,6 +17,8 @@
 
 typedef std::vector<int> State; // Represents a state assignment of relevant predicates
 typedef std::vector<bool> bState; // Represents a state assignment of relevant predicates
+typedef std::vector<std::pair<size_t, int>> Assignment;
+
 class StateDict {
 private:
     // Type values
@@ -35,6 +37,7 @@ private:
 public:
     static void loadPredicates(const std::string& path);
     static size_t addState(const State& s);
+    static State getState(size_t i);
     static State parseState(const std::string& s);
     static size_t numStateOptions();
     static void initialize(size_t n);
@@ -42,6 +45,7 @@ public:
     static bool hasState(const State& s);
     static size_t numPredicates();
     static bState diff(const State& a, const State& b);
+    static bool match(const Assignment &a, const State &s);
 };
 
 class ActionDict {
@@ -64,9 +68,16 @@ typedef std::shared_ptr<_Node> NodePtr;
 
 struct NodeInfo {
     NodePtr child;
-    double reward;
-    size_t state;
-    NodeInfo(NodePtr c, double r, size_t s) : child(c), reward(r), state(s) {};
+    std::vector<double> reward; // All the states that came through here
+    std::vector<size_t> state; // All the states that came through here
+    int max_reward_idx; // Index of the maximum reward element from the state
+
+    NodeInfo(NodePtr c, double r, size_t s) {
+        reward.push_back(r);
+        state.push_back(s);
+        child = c;
+        max_reward_idx = 0;
+    };
     NodeInfo() = default;
 };
 
@@ -82,14 +93,14 @@ public:
     bool hasChild(size_t i);
 };
 
-
 class PlanTree {
 private:
     NodePtr root;
+    void recomputeMaxs(NodePtr root, const Assignment& a); //recursive
 public:
     PlanTree();
     explicit PlanTree(const std::string& planspace_path);
-
+    void recomputeMaxs(const Assignment& a);
     void loadTreeFromFile(const std::string& planspace_path);
     NodePtr getRoot();
 };

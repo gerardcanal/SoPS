@@ -115,14 +115,25 @@ size_t StateDict::numPredicates() {
     return _state_types.size();
 }
 
-/*
- * Diff(a, b) is a boolean vector where d[i] = a[i] != b[i];
- */
+
+// diff(a, b) is a boolean vector where d[i] = a[i] != b[i];
 bState StateDict::diff(const State &a, const State &b) {
     assert(a.size() == b.size());
     bState d(a.size());
     for (size_t i = 0; i < a.size(); ++i) d[i] = a[i] != b[i];
     return d;
+}
+
+bool StateDict::match(const Assignment &a, const State &s) {
+    for (auto it = a.begin(); it != a.end(); ++it) {
+        if (s[it->first] != it->second) return false;
+    }
+    return true;
+}
+
+State StateDict::getState(size_t i) {
+    assert(i < _states.size());
+    return _states[i];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,9 +183,10 @@ _Node::~_Node() {
 NodePtr _Node::addChild(size_t a_id, double reward, size_t state) {
     if (hasChild(a_id)) { // node already exists
         auto ni = children.find(a_id);
-        if (ni->second.reward < reward) {
-            ni->second.reward = reward;
-            ni->second.state = state;
+        ni->second.reward.push_back(reward);
+        ni->second.state.push_back(state);
+        if (ni->second.reward[ni->second.max_reward_idx] < reward) {
+            ni->second.max_reward_idx = ni->second.reward.size()-1;
         }
         return ni->second.child;
     }
@@ -247,6 +259,23 @@ void PlanTree::loadTreeFromFile(const std::string &planspace_path) {
 
 NodePtr PlanTree::getRoot() {
     return root;
+}
+
+void PlanTree::recomputeMaxs(const Assignment &a) {
+    recomputeMaxs(root, a);
+}
+
+void PlanTree::recomputeMaxs(NodePtr root, const Assignment &a) {
+    for (auto it = root->children.begin(); it != root->children.end(); ++it) {
+        int max_r = -1;
+        // Iterate over all the rewards that lead to this state
+        for (size_t i = 0; i < it->second.reward.size(); ++i) {
+            if (StateDict::match(a, StateDict::getState(it->second.state[i]))
+                and ((max_r == -1) or (it->second.reward[i] > it->second.reward[max_r]))) max_r = i;
+        }
+        it->second.max_reward_idx = max_r;
+        recomputeMaxs(it->second.child, a);
+    }
 }
 
 

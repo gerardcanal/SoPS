@@ -20,4 +20,5 @@ int main(int argc, char* argv[]) {
     std::cout << "Hello" << std::endl;
     StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
     PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/shoe_planslongest.txt");
+    pt.recomputeMaxs(Assignment({{6, 1}, {2, 3}}));
 }
