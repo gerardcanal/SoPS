@@ -37,6 +37,9 @@ State StateDict::parseState(const std::string& s) {
 }
 
 size_t StateDict::addState(const State& s) {
+    auto find = _states_ids.find(s);
+    if (find != _states_ids.end()) return find->second;
+
     size_t i = _states.size();
     _states.push_back(s);
     _states_ids[s] = i;
@@ -107,6 +110,21 @@ size_t StateDict::getStateId(const State &s) {
     return _states_ids[s];
 }
 
+size_t StateDict::numPredicates() {
+    assert(init);
+    return _state_types.size();
+}
+
+/*
+ * Diff(a, b) is a boolean vector where d[i] = a[i] != b[i];
+ */
+bState StateDict::diff(const State &a, const State &b) {
+    assert(a.size() == b.size());
+    bState d(a.size());
+    for (size_t i = 0; i < a.size(); ++i) d[i] = a[i] != b[i];
+    return d;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionDict class
 
@@ -142,34 +160,37 @@ bool ActionDict::hasAction(const std::string &a) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Node class
 
-_Node::_Node(int a_id) : action_id(a_id) {}
+_Node::_Node(size_t a_id) : action_id(a_id) {}
 
 _Node::~_Node() {
     for (auto it: children) {
-        it.second.reset(); // Not really needed but..
+        it.second.child.reset(); // Not really needed but..
     }
 }
 
 
-void _Node::addChild(int a_id, double reward, int state) {
+NodePtr _Node::addChild(size_t a_id, double reward, size_t state) {
     if (hasChild(a_id)) { // node already exists
-        if (max_rewards[a_id] < reward) {
-            max_rewards[a_id] = reward;
-            states[a_id] = state;
+        auto ni = children.find(a_id);
+        if (ni->second.reward < reward) {
+            ni->second.reward = reward;
+            ni->second.state = state;
         }
+        return ni->second.child;
     }
     else {
-        children[a_id] = std::make_shared<_Node>(a_id); // new node
-        max_rewards[a_id] = reward;
+        NodePtr child = std::make_shared<_Node>(a_id);
+        children[a_id] = NodeInfo(child, reward, state);
+        return child;
     }
 }
 
-NodePtr _Node::getChild(int i) {
+NodeInfo _Node::getChild(size_t i) {
     assert(hasChild(i));
     return children[i];
 }
 
-bool _Node::hasChild(int i) {
+bool _Node::hasChild(size_t i) {
     return children.find(i) != children.end();
 }
 
@@ -207,24 +228,25 @@ void PlanTree::loadTreeFromFile(const std::string &planspace_path) {
         double reward = std::stod(m[3]); // Reward
 
         size_t state_id;
-        if (StateDict::hasState(state)) {
-
-        }
-        else {
-            state_id = StateDict::addState(state); // State
-        }
-
-        std::vector<std::string> plan;
-        str_plan = m[2]; // Action sequence / plan
-        for (auto rit = std::regex_iterator<std::string::const_iterator>(str_plan.begin(), str_plan.end(), action_separator); rit != rend; ++rit) {
-            if (rit->str(1).empty()) continue;
-            plan.push_back(rit->str(1));
-        }
+        if (StateDict::hasState(state)) state_id = StateDict::getStateId(state);
+        else state_id = StateDict::addState(state); // State
 
         // Insert in tree
+        str_plan = m[2]; // Action sequence / plan
+        NodePtr current = root;
+        for (auto rit = std::regex_iterator<std::string::const_iterator>(str_plan.begin(), str_plan.end(), action_separator); rit != rend; ++rit) {
+            // rit->str(1) is the action
+            if (rit->str(1).empty()) continue;
+            size_t a_id = ActionDict::addAction(rit->str(1));
+            current = current->addChild(a_id, reward, state_id); // Current will be the new child. AddChild updates the child if needed
+        }
     }
 
     planspace_file.close();
+}
+
+NodePtr PlanTree::getRoot() {
+    return root;
 }
 
 

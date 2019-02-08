@@ -9,6 +9,14 @@
 #include "PlanTree.h"
 
 class PlanSpaceSuggesterNode {
+private:
+    std::string planspace_path;
+
+public:
+    PlanSpaceSuggesterNode(const std::string& planspace_path);
+
+    void suggestNew();
+    void suggestChanges();
 
 };
 

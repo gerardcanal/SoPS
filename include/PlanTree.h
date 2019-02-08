@@ -16,6 +16,7 @@
 #include <algorithm>
 
 typedef std::vector<int> State; // Represents a state assignment of relevant predicates
+typedef std::vector<bool> bState; // Represents a state assignment of relevant predicates
 class StateDict {
 private:
     // Type values
@@ -39,6 +40,8 @@ public:
     static void initialize(size_t n);
     static size_t getStateId(const State& s);
     static bool hasState(const State& s);
+    static size_t numPredicates();
+    static bState diff(const State& a, const State& b);
 };
 
 class ActionDict {
@@ -53,21 +56,30 @@ public:
     static bool hasAction(const std::string& a);
 };
 
+
+
 // Tree node
 class _Node; // Fwd declaration
 typedef std::shared_ptr<_Node> NodePtr;
+
+struct NodeInfo {
+    NodePtr child;
+    double reward;
+    size_t state;
+    NodeInfo(NodePtr c, double r, size_t s) : child(c), reward(r), state(s) {};
+    NodeInfo() = default;
+};
+
 class _Node {
 public:
     int action_id; // Node action. -1 Means root node!
-    std::map<int, NodePtr> children; // int is the action id from the ActionDict
-    std::map<int, double> max_rewards; // int is the action id, double the reward of the child i
-    std::map<int, int> states; // Will store the preferences for each node. The key is the action id, value the state id
+    std::map<size_t, NodeInfo> children; // int is the action id from the ActionDict
 
-    explicit _Node(int a_id);
+    explicit _Node(size_t a_id);
     ~_Node();
-    void addChild(int a_id, double reward, int state);
-    NodePtr getChild(int i);
-    bool hasChild(int i);
+    NodePtr addChild(size_t a_id, double reward, size_t state); // returns the child
+    NodeInfo getChild(size_t i);
+    bool hasChild(size_t i);
 };
 
 
@@ -79,6 +91,7 @@ public:
     explicit PlanTree(const std::string& planspace_path);
 
     void loadTreeFromFile(const std::string& planspace_path);
+    NodePtr getRoot();
 };
 
 
