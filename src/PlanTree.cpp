@@ -278,5 +278,31 @@ void PlanTree::recomputeMaxs(NodePtr root, const Assignment &a) {
     }
 }
 
+bool PlanTree::isEqual(const PlanTree &p) {
+    return areEqual(root, p.root);
+}
+
+bool PlanTree::areEqual(NodePtrConst a, NodePtrConst b) {
+    bool equal = a->action_id == b->action_id;
+    equal &= a->children.size() == b->children.size();
+    for (auto it = a->children.begin(); equal and it != a->children.end(); ++it) {
+        auto bchild = b->children.find(it->first);
+        if (bchild == b->children.end()) return false;
+        equal &= it->first == bchild->first;
+
+        equal &= it->second.state.size() == bchild->second.state.size();
+        for (size_t j = 0; equal and j < it->second.state.size(); ++j)
+            equal &= it->second.state[j] == bchild->second.state[j];
+
+        equal &= it->second.reward.size() == bchild->second.reward.size();
+        for (size_t j = 0; equal and j < it->second.reward.size(); ++j)
+            equal &= it->second.reward[j] == bchild->second.reward[j];
+
+        equal &= it->second.max_reward_idx == bchild->second.max_reward_idx;
+        equal &= areEqual(it->second.child, bchild->second.child);
+    }
+    return equal;
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -65,6 +65,7 @@ public:
 // Tree node
 class _Node; // Fwd declaration
 typedef std::shared_ptr<_Node> NodePtr;
+typedef std::shared_ptr<const _Node> NodePtrConst;
 
 struct NodeInfo {
     NodePtr child;
@@ -96,13 +97,16 @@ public:
 class PlanTree {
 private:
     NodePtr root;
+
     void recomputeMaxs(NodePtr root, const Assignment& a); //recursive
+    static bool areEqual(NodePtrConst a, NodePtrConst b); //recursive
 public:
     PlanTree();
     explicit PlanTree(const std::string& planspace_path);
     void recomputeMaxs(const Assignment& a);
     void loadTreeFromFile(const std::string& planspace_path);
     NodePtr getRoot();
+    bool isEqual(const PlanTree& p);
 };
 
 
