@@ -12,10 +12,11 @@ class PlanSpaceSuggesterNode {
 private:
     std::string planspace_path;
 
+    std::vector<size_t> getMaxRChildren(NodePtr n);
 public:
     PlanSpaceSuggesterNode(const std::string& planspace_path);
 
-    void suggestNew();
+    void suggestNew(NodePtr root);
     void suggestChanges();
 
 };
