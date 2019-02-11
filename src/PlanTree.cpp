@@ -304,5 +304,17 @@ bool PlanTree::areEqual(NodePtrConst a, NodePtrConst b) {
     return equal;
 }
 
+size_t PlanTree::size(NodePtrConst n) {
+    size_t s = 0;
+    for (auto it: n->children) {
+        s += 1 + size(it.second.child);
+    }
+    return s;
+}
+
+size_t PlanTree::size() {
+    return size(root);
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

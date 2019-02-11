@@ -81,6 +81,8 @@ struct NodeInfo {
     };
     NodeInfo() = default;
 };
+typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
+
 
 class _Node {
 public:
@@ -100,6 +102,7 @@ private:
 
     void recomputeMaxs(NodePtr root, const Assignment& a); //recursive
     static bool areEqual(NodePtrConst a, NodePtrConst b); //recursive
+    size_t size(NodePtrConst n); //recursive
 public:
     PlanTree();
     explicit PlanTree(const std::string& planspace_path);
@@ -107,6 +110,7 @@ public:
     void loadTreeFromFile(const std::string& planspace_path);
     NodePtr getRoot();
     bool isEqual(const PlanTree& p);
+    size_t size();
 };
 
 
