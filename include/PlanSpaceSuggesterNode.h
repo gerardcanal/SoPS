@@ -21,6 +21,12 @@ struct DiffResults {
     double metric; // IG...
 };
 
+struct Suggestion {
+    Assignment assignments;
+    int ndiffs;
+    double reward; // Suggestion reward -> from the node that generated the suggestion
+};
+
 class PlanSpaceSuggesterNode {
 private:
     std::string planspace_path;
@@ -32,9 +38,10 @@ public:
     PlanSpaceSuggesterNode(const std::string& planspace_path);
 
     std::vector<DiffResults> getMaxChildDiffs(NodePtr root);
-    DiffResults & suggestChanges(PlanTree pt);
+    Suggestion suggestChanges(PlanTree pt);
+    std::vector<Suggestion> getMinSuggestions(PlanTree& pt);
 
-    double computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
+    Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS);
 };
 

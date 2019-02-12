@@ -31,6 +31,8 @@ void PlanSpaceSuggesterNode::join(std::vector<DiffResults> &a,
 }
 
 
+// Returns the diff matrices of the childs with max reward (recursive to whole tree starting at node n)
+// Each diffresults includes the diff matrix, the associated metric and the node source of comparison.
 std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n) {
     //State suggestions(StateDict::numPredicates());
 
@@ -58,14 +60,16 @@ std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n) {
     return ret;
 }
 
-DiffResults& PlanSpaceSuggesterNode::suggestChanges(PlanTree pt) {
+Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt) {
     std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot());
     assert(allchildDiffs.size() > 0);
     size_t max_m = 0;
     for (size_t i = 1 ; i < allchildDiffs.size(); ++i) {
         if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) max_m = i;
     }
-    return allchildDiffs[max_m];
+    //return allchildDiffs[max_m];
+
+    return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
 }
 
 
@@ -89,11 +93,59 @@ double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const s
     return rsum;
 }
 
-double PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
-    // TODO
-    return 0;
+Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
+    // Sum differences. The column with more differences will be the suggested one
+    assert(d.size() > 0);
+    Suggestion sugg;
+    sugg.ndiffs = 0; // Holds the maximum
+    for (size_t i = 0; i < d[0].size(); ++i) {  // iterate columns!
+        int s = 0; // Sum of diffs
+        // Sum column
+        for (size_t j = 0; j < d.size(); ++j) s += d[j][i];
+        if (s > sugg.ndiffs) {
+            sugg.assignments.clear();
+            sugg.ndiffs = s;
+            sugg.assignments.emplace_back(std::make_pair(i, StateDict::getState(ni->state[ni->max_reward_idx])[i]));
+        }
+        else if (s == sugg.ndiffs) {
+            sugg.assignments.emplace_back(std::make_pair(i, StateDict::getState(ni->state[ni->max_reward_idx])[i]));
+        }
+    }
+    sugg.reward = ni->reward[ni->max_reward_idx];
+    return sugg;
 }
 
+std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt) {
+    std::vector<Suggestion> sgg;
+    double curr_r = 0;
+    NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
+    double max_r = max_r_child.reward[max_r_child.max_reward_idx];
+    int n = 0;
+    while (curr_r < max_r) {
+        // Get Suggestion
+        Suggestion s = suggestChanges(pt);
+
+        // Update curr_r
+        //curr_r = s.reward;
+
+        // Print suggestion
+        std::cout << "Suggestion " << ++n << ": ";
+        for (auto ai = s.assignments.begin(); ai != s.assignments.end(); ++ai) {
+            std::string predname = StateDict::getPredName(ai->first);
+            std::cout << predname << " = " << StateDict::getPredValue(predname, ai->second) << " (" << ai->first
+                      << " = " << ai->second << ") ";
+        }
+        std::cout << curr_r << std::endl;
+
+        // Store suggestion
+        sgg.push_back(s);
+
+
+        // Update tree with the suggestion
+        pt.recomputeMaxs(s.assignments);
+    }
+    return sgg;
+}
 
 
 int main(int argc, char* argv[]) {
@@ -106,7 +158,7 @@ int main(int argc, char* argv[]) {
     //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
 
     PlanSpaceSuggesterNode n("");
-    n.suggestChanges(pt);
+    n.getMinSuggestions(pt);
     exit(0);
 
 

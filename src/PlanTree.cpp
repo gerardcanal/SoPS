@@ -136,6 +136,17 @@ State StateDict::getState(size_t i) {
     return _states[i];
 }
 
+std::string StateDict::getPredName(size_t id) {
+    for (auto it: _state_types) {
+        if (it.second.second == id) return it.first;
+    }
+    return "NOTFOUND";
+}
+
+std::string StateDict::getPredValue(const std::string &pred_name, size_t value) {
+    return _type_values[_state_types[pred_name].first][value];
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionDict class
 
