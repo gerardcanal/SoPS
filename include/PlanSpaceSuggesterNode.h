@@ -29,17 +29,15 @@ struct Suggestion {
 
 class PlanSpaceSuggesterNode {
 private:
-    std::string planspace_path;
-
     std::vector<size_t> getMaxRChildren(NodePtr n);
     void join(std::vector<DiffResults> &a, std::vector<DiffResults> &b);
 
 public:
-    PlanSpaceSuggesterNode(const std::string& planspace_path);
+    PlanSpaceSuggesterNode();
 
-    std::vector<DiffResults> getMaxChildDiffs(NodePtr root);
-    Suggestion suggestChanges(PlanTree pt);
-    std::vector<Suggestion> getMinSuggestions(PlanTree& pt);
+    std::vector<DiffResults> getMaxChildDiffs(NodePtr root, const bState& mask);
+    Suggestion suggestChanges(PlanTree pt, const Assignment& mask);
+    std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment assignment = Assignment());
 
     Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS);

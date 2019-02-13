@@ -44,10 +44,11 @@ public:
     static size_t getStateId(const State& s);
     static bool hasState(const State& s);
     static size_t numPredicates();
-    static bState diff(const State& a, const State& b);
+    static bState diff(const State& a, const State& b, const bState& mask);
     static bool match(const Assignment &a, const State &s);
     static std::string getPredName(size_t id);
     static std::string getPredValue(const std::string& pred_name, size_t value);
+    static bState computeMask(const Assignment& a);
 };
 
 class ActionDict {

@@ -116,11 +116,22 @@ size_t StateDict::numPredicates() {
 }
 
 
+bState StateDict::computeMask(const Assignment &a) {
+    bState mask(StateDict::numPredicates(), true); // Default check all of them
+    for (auto it: a) {
+        mask[it.first] = false;
+    }
+    return mask;
+}
+
 // diff(a, b) is a boolean vector where d[i] = a[i] != b[i];
-bState StateDict::diff(const State &a, const State &b) {
+// Mask determines which attributes (columns) have to be considered (mask[i] == 1), or ignored (mask[i] == 0)
+bState StateDict::diff(const State &a, const State &b, const bState& mask) {
     assert(a.size() == b.size());
-    bState d(a.size());
-    for (size_t i = 0; i < a.size(); ++i) d[i] = a[i] != b[i];
+    bState d(a.size(), false);
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (mask[i]) d[i] = a[i] != b[i];
+    }
     return d;
 }
 

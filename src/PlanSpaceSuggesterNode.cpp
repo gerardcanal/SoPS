@@ -5,8 +5,8 @@
 #include <PlanSpaceSuggesterNode.h>
 
 
-PlanSpaceSuggesterNode::PlanSpaceSuggesterNode(const std::string &planspace_path) {
-    this->planspace_path = planspace_path;
+PlanSpaceSuggesterNode::PlanSpaceSuggesterNode() {
+    //this->planspace_path = planspace_path;
 }
 
 // Returns ids of children with max reward
@@ -33,7 +33,8 @@ void PlanSpaceSuggesterNode::join(std::vector<DiffResults> &a,
 
 // Returns the diff matrices of the childs with max reward (recursive to whole tree starting at node n)
 // Each diffresults includes the diff matrix, the associated metric and the node source of comparison.
-std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n) {
+// Mask: see SateDict::diff()
+std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n, const bState& mask) {
     //State suggestions(StateDict::numPredicates());
 
     std::vector<DiffResults> ret;
@@ -45,7 +46,7 @@ std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n) {
         for (auto c_it = n->children.begin(); c_it != n->children.end(); ++c_it) {
             if (c_it->first == c_id) continue;
             bState diff = StateDict::diff(StateDict::getState(c.state[c.max_reward_idx]),
-                                          StateDict::getState(c_it->second.state[c_it->second.max_reward_idx]));
+                                          StateDict::getState(c_it->second.state[c_it->second.max_reward_idx]), mask);
             d.S.push_back(diff);
         }
 
@@ -54,19 +55,24 @@ std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n) {
         d.metric = computeNodeMetric(c_id, n, d.S);
         ret.push_back(d);
 
-        auto childdiffs = getMaxChildDiffs(c.child);
+        auto childdiffs = getMaxChildDiffs(c.child, mask);
         join(ret, childdiffs);
     }
     return ret;
 }
 
-Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt) {
-    std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot());
+// Assignment is the fixed values for the predicates
+Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt, const Assignment& assignment) {
+    bState mask = StateDict::computeMask(assignment);
+    std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot(), mask);
     assert(allchildDiffs.size() > 0);
     size_t max_m = 0;
+    int equal = 0;
     for (size_t i = 1 ; i < allchildDiffs.size(); ++i) {
         if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) max_m = i;
+        else if (allchildDiffs[i].metric == allchildDiffs[max_m].metric) ++equal;
     }
+    std::cout << equal << std::endl;
     //return allchildDiffs[max_m];
 
     return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
@@ -93,6 +99,7 @@ double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const s
     return rsum;
 }
 
+// d is a matrix of differences
 Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
     // Sum differences. The column with more differences will be the suggested one
     assert(d.size() > 0);
@@ -115,15 +122,18 @@ Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bStat
     return sugg;
 }
 
-std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt) {
+// Previous assignments are already passed
+std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt, Assignment assignment) {
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
     double max_r = max_r_child.reward[max_r_child.max_reward_idx];
     int n = 0;
+
     while (curr_r < max_r) {
         // Get Suggestion
-        Suggestion s = suggestChanges(pt);
+        Suggestion s = suggestChanges(pt, assignment);
+        assignment.insert(assignment.end(), s.assignments.begin(), s.assignments.end());
 
         // Update curr_r
         //curr_r = s.reward;
@@ -135,7 +145,7 @@ std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt) 
             std::cout << predname << " = " << StateDict::getPredValue(predname, ai->second) << " (" << ai->first
                       << " = " << ai->second << ") ";
         }
-        std::cout << curr_r << std::endl;
+        std::cout << curr_r << " " << s.reward << std::endl;
 
         // Store suggestion
         sgg.push_back(s);
@@ -157,7 +167,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Tree size: " << pt.size() << std::endl;
     //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
 
-    PlanSpaceSuggesterNode n("");
+    PlanSpaceSuggesterNode n;
     n.getMinSuggestions(pt);
     exit(0);
 
