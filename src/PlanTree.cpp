@@ -295,7 +295,7 @@ void PlanTree::recomputeMaxs(NodePtr root, const Assignment &a) {
             if (StateDict::match(a, StateDict::getState(it->second.state[i]))
                 and ((max_r == -1) or (it->second.reward[i] > it->second.reward[max_r]))) max_r = i;
         }
-        it->second.max_reward_idx = max_r;
+        it->second.max_reward_idx = max_r; // -1 means there is no match
         recomputeMaxs(it->second.child, a);
     }
 }

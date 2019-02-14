@@ -3,7 +3,7 @@
 //
 
 #include <PlanSpaceSuggesterNode.h>
-
+#include <cmath>
 
 PlanSpaceSuggesterNode::PlanSpaceSuggesterNode() {
     //this->planspace_path = planspace_path;
@@ -14,6 +14,7 @@ std::vector<size_t> PlanSpaceSuggesterNode::getMaxRChildren(NodePtr n) {
     std::vector<size_t> idxs;
     double maxr = -std::numeric_limits<double>::max();
     for (auto it = n->children.begin(); it != n->children.end(); ++it) {
+        if (it->second.max_reward_idx == -1) continue; // Pruned child!
         double it_r = it->second.reward[it->second.max_reward_idx];
         if (it_r > maxr) {
             idxs.clear();
@@ -45,15 +46,18 @@ std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n, con
         DiffResults d;  // diff matrix of child c_id with all the others
         for (auto c_it = n->children.begin(); c_it != n->children.end(); ++c_it) {
             if (c_it->first == c_id) continue;
+            if (c.max_reward_idx == -1 or c_it->second.max_reward_idx == -1) continue;
             bState diff = StateDict::diff(StateDict::getState(c.state[c.max_reward_idx]),
                                           StateDict::getState(c_it->second.state[c_it->second.max_reward_idx]), mask);
             d.S.push_back(diff);
         }
 
         // Compute metric
-        d.node = std::make_shared<NodeInfo>(c);
-        d.metric = computeNodeMetric(c_id, n, d.S);
-        ret.push_back(d);
+        if (not d.S.empty()) { // If it's empty it means there's only one valid child.
+            d.node = std::make_shared<NodeInfo>(c);
+            d.metric = computeNodeMetric(c_id, n, d.S);
+            ret.push_back(d);
+        }
 
         auto childdiffs = getMaxChildDiffs(c.child, mask);
         join(ret, childdiffs);
@@ -68,41 +72,80 @@ Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt, const Assignment&
     assert(allchildDiffs.size() > 0);
     size_t max_m = 0;
     int equal = 0;
+    double metric_sum = allchildDiffs[0].metric; // Sums all the metrics
     for (size_t i = 1 ; i < allchildDiffs.size(); ++i) {
-        if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) max_m = i;
+        if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) {
+            max_m = i;
+            equal = 0;
+        }
         else if (allchildDiffs[i].metric == allchildDiffs[max_m].metric) ++equal;
+        metric_sum += allchildDiffs[i].metric;
+        //std::cout <<allchildDiffs[i].metric <<std::endl;
     }
-    std::cout << equal << std::endl;
-    //return allchildDiffs[max_m];
+
+    // Compute deviation
+    double mean = metric_sum / allchildDiffs.size();
+    double sigma = 0;
+    for (size_t i = 0 ; i < allchildDiffs.size(); ++i) {
+        double aux = allchildDiffs[i].metric-mean;
+        sigma += aux*aux;
+    }
+    sigma /= (allchildDiffs.size()-1);
+
+    std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
 
     return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
 }
 
 
 // c_id is the reference child id
-double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy) {
+double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &d, int strategy) {
+//#define COMPUTEVARIANCE // for debug
     double rsum = 0;
+    int nchilds = 0;
     for (auto c_it = n->children.begin(); c_it != n->children.end(); ++c_it) {
         if (c_it->first == c_id) continue;
+        if (c_it->second.max_reward_idx == -1) continue;
         rsum += c_it->second.reward[c_it->second.max_reward_idx];
+        ++nchilds;
     }
+    assert(n->children[c_id].max_reward_idx != -1); // Shouldn't be 0 as n must be a maxreward child
+    double xreward = n->children[c_id].reward[n->children[c_id].max_reward_idx]; // Reward of the maximum
+
     // ret is now the sum of all the elements but c_id
-    double xreward = n->children[c_id].reward[n->children[c_id].max_reward_idx];
-    int nchilds = (n->children.size()-1); // -1 because we're not counting c_id!
+    //int nchilds = (n->children.size()-1); // -1 because we're not counting c_id!
     if (nchilds == 0) return 0;
     if (strategy == M_SUMDIFFS) {
+        #ifdef COMPUTEVARIANCE
+        double mean = rsum / nchilds;
+        double sigma = 0;
+        for (auto c_it = n->children.begin(); c_it != n->children.end(); ++c_it) {
+            if (c_it->first == c_id or c_it->second.max_reward_idx == -1) continue;
+            double aux = c_it->second.reward[c_it->second.max_reward_idx]-mean;
+            sigma += aux*aux;
+        }
+        sigma /= nchilds - 1;
+        std::cout << "s = " << std::sqrt(sigma) << " " << " s² = " << sigma << std::endl;
+        #endif
         // SUMDIFFS is sum of the differences: x-y1 + x-y2 + ... = nx-SUM(y)
         //return ((nchilds*xreward) - rsum)/nchilds;
         return (xreward - (rsum/nchilds));// optimized version
+    }
+    else if (strategy == M_SUMDIFFS_NORM) {
+        // Divide by rmax to normalize in range 0-1
+        // sum(rmax - r_i)/(n*Rmax) = n*Rmax-sum(r_i)/n*Rmax = 1 - sum(r_i)/n*rmax
+        return 1-(rsum/(nchilds*xreward));
     }
     ROS_ERROR_STREAM("[computeNodeMetric] Unknown metric " << strategy << std::endl);
     return rsum;
 }
 
 // d is a matrix of differences
+// ni is the selected node with max metric
 Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
     // Sum differences. The column with more differences will be the suggested one
     assert(d.size() > 0);
+    assert(ni->max_reward_idx != -1);
     Suggestion sugg;
     sugg.ndiffs = 0; // Holds the maximum
     for (size_t i = 0; i < d[0].size(); ++i) {  // iterate columns!
@@ -127,6 +170,7 @@ std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt, 
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
+    if (max_r_child.max_reward_idx == -1) return sgg; // No suggestion, we're done!
     double max_r = max_r_child.reward[max_r_child.max_reward_idx];
     int n = 0;
 

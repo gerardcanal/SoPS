@@ -12,8 +12,9 @@
 
 // Metrics
 #define M_SUMDIFFS 1
-#define M_DIFFMU 2
-#define M_IG 3
+#define M_SUMDIFFS_NORM 2
+#define M_DIFFMU 3
+#define M_IG 4
 
 struct DiffResults {
     std::vector<bState> S;
