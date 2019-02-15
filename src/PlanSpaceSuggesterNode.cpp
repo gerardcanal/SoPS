@@ -106,6 +106,10 @@ double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const s
     for (auto c_it = n->children.begin(); c_it != n->children.end(); ++c_it) {
         if (c_it->first == c_id) continue;
         if (c_it->second.max_reward_idx == -1) continue;
+        auto s = StateDict::getState(c_it->second.state[c_it->second.max_reward_idx]);
+    //for (auto ittt = s.begin(); ittt != s.end(); ++ittt)
+    //    std::cout << *ittt << " ";
+    //std::cout << c_it->second.reward[c_it->second.max_reward_idx] << std::endl;
         rsum += c_it->second.reward[c_it->second.max_reward_idx];
         ++nchilds;
     }
@@ -189,14 +193,14 @@ std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt, 
             std::cout << predname << " = " << StateDict::getPredValue(predname, ai->second) << " (" << ai->first
                       << " = " << ai->second << ") ";
         }
-        std::cout << curr_r << " " << s.reward << std::endl;
+        std::cout << curr_r << " " << s.reward << " " << s.ndiffs << std::endl;
 
         // Store suggestion
         sgg.push_back(s);
 
 
         // Update tree with the suggestion
-        pt.recomputeMaxs(s.assignments);
+        pt.recomputeMaxs(assignment);
     }
     return sgg;
 }
