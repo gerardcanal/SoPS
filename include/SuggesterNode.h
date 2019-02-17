@@ -1,20 +1,20 @@
 //
-// Created by gcanal on 30/01/19.
+// Created by gerard on 17/02/19.
 //
 
-#ifndef IROS2019_PLANSPACEGENERATOR_H
-#define IROS2019_PLANSPACEGENERATOR_H
+#ifndef IROS2019_SUGGESTERNODE_H
+#define IROS2019_SUGGESTERNODE_H
 
 #include "ros/ros.h"
 #include "rosplan_knowledge_msgs/GetEnumerableTypeService.h"
 #include "rosplan_knowledge_msgs/KnowledgeUpdateServiceArray.h"
 #include "rosplan_dispatch_msgs/CompletePlan.h"
 #include "std_srvs/Empty.h"
-#include <fstream>
 #include <regex>
+#include <fstream>
+#define RESTART_KB_TRIALS 15
 
-
-class PlanSpaceGenerator {
+class SuggesterNode {
 private:
     ros::NodeHandle _nh;
 
@@ -28,19 +28,16 @@ private:
     std::string _planner_output_file;
     int gen_plans_since_restart;
 
-    std::map<std::string, std::vector<std::string>> _type_values; // Map preference type -> values
-    std::vector<std::pair<std::string, std::string>> _pref_types; // List of preferences and its type
 
     void setKBValues(const std::vector<int>& assignments);
     void planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan);
-    void generatePlans(int i, std::vector<int>& assignments);
-    std::vector<int> getAssignIndex();
-public:
-    PlanSpaceGenerator(ros::NodeHandle& nh);
-    ~PlanSpaceGenerator() = default;
-    void generatePlans();
 
+    double planOnce(const std::vector<int>& assignments);
+public:
+    SuggesterNode(ros::NodeHandle& nh);
+    ~SuggesterNode() = default;
+    void runExperiments();
 };
 
 
-#endif //IROS2019_PLANSPACEGENERATOR_H
+#endif //IROS2019_SUGGESTERNODE_H

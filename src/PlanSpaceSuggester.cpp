@@ -2,15 +2,15 @@
 // Created by gcanal on 05/02/19.
 //
 
-#include <PlanSpaceSuggesterNode.h>
+#include <PlanSpaceSuggester.h>
 #include <cmath>
 
-PlanSpaceSuggesterNode::PlanSpaceSuggesterNode() {
+PlanSpaceSuggester::PlanSpaceSuggester() {
     //this->planspace_path = planspace_path;
 }
 
 // Returns ids of children with max reward
-std::vector<size_t> PlanSpaceSuggesterNode::getMaxRChildren(NodePtr n) {
+std::vector<size_t> PlanSpaceSuggester::getMaxRChildren(NodePtr n) {
     std::vector<size_t> idxs;
     double maxr = -std::numeric_limits<double>::max();
     for (auto it = n->children.begin(); it != n->children.end(); ++it) {
@@ -26,7 +26,7 @@ std::vector<size_t> PlanSpaceSuggesterNode::getMaxRChildren(NodePtr n) {
     return idxs;
 }
 
-void PlanSpaceSuggesterNode::join(std::vector<DiffResults> &a,
+void PlanSpaceSuggester::join(std::vector<DiffResults> &a,
                                   std::vector<DiffResults> &b) {
     a.insert(a.end(), std::make_move_iterator(b.begin()), std::make_move_iterator(b.end()));
 }
@@ -35,7 +35,7 @@ void PlanSpaceSuggesterNode::join(std::vector<DiffResults> &a,
 // Returns the diff matrices of the childs with max reward (recursive to whole tree starting at node n)
 // Each diffresults includes the diff matrix, the associated metric and the node source of comparison.
 // Mask: see SateDict::diff()
-std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n, const bState& mask) {
+std::vector<DiffResults> PlanSpaceSuggester::getMaxChildDiffs(NodePtr n, const bState& mask) {
     //State suggestions(StateDict::numPredicates());
 
     std::vector<DiffResults> ret;
@@ -66,7 +66,7 @@ std::vector<DiffResults> PlanSpaceSuggesterNode::getMaxChildDiffs(NodePtr n, con
 }
 
 // Assignment is the fixed values for the predicates
-Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt, const Assignment& assignment) {
+Suggestion PlanSpaceSuggester::suggestChanges(PlanTree pt, const Assignment& assignment) {
     bState mask = StateDict::computeMask(assignment);
     std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot(), mask);
     assert(allchildDiffs.size() > 0);
@@ -99,7 +99,7 @@ Suggestion PlanSpaceSuggesterNode::suggestChanges(PlanTree pt, const Assignment&
 
 
 // c_id is the reference child id
-double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &d, int strategy) {
+double PlanSpaceSuggester::computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &d, int strategy) {
 //#define COMPUTEVARIANCE // for debug
     double rsum = 0;
     int nchilds = 0;
@@ -146,7 +146,7 @@ double PlanSpaceSuggesterNode::computeNodeMetric(size_t c_id, NodePtr n, const s
 
 // d is a matrix of differences
 // ni is the selected node with max metric
-Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
+Suggestion PlanSpaceSuggester::computeNodeSuggestion(const std::vector<bState> &d, NodeInfoPtr ni) {
     // Sum differences. The column with more differences will be the suggested one
     assert(d.size() > 0);
     assert(ni->max_reward_idx != -1);
@@ -170,7 +170,7 @@ Suggestion PlanSpaceSuggesterNode::computeNodeSuggestion(const std::vector<bStat
 }
 
 // Previous assignments are already passed
-std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt, Assignment assignment) {
+std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment assignment) {
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
@@ -206,16 +206,16 @@ std::vector<Suggestion> PlanSpaceSuggesterNode::getMinSuggestions(PlanTree &pt, 
 }
 
 
-int main(int argc, char* argv[]) {
+int main_(int argc, char* argv[]) {
     std::cout << "Hello" << std::endl;
-    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
-    //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/shoe_planslongest.txt");
-    PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
     std::cout << "Tree size: " << pt.size() << std::endl;
-    //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
 
-    PlanSpaceSuggesterNode n;
+    PlanSpaceSuggester n;
     n.getMinSuggestions(pt);
     exit(0);
 

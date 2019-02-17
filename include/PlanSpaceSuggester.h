@@ -28,20 +28,20 @@ struct Suggestion {
     double reward; // Suggestion reward -> from the node that generated the suggestion
 };
 
-class PlanSpaceSuggesterNode {
+class PlanSpaceSuggester {
 private:
     std::vector<size_t> getMaxRChildren(NodePtr n);
     void join(std::vector<DiffResults> &a, std::vector<DiffResults> &b);
 
 public:
-    PlanSpaceSuggesterNode();
+    PlanSpaceSuggester();
 
     std::vector<DiffResults> getMaxChildDiffs(NodePtr root, const bState& mask);
     Suggestion suggestChanges(PlanTree pt, const Assignment& mask);
     std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment assignment = Assignment());
 
     Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
-    double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS);
+    double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS_NORM);
 };
 
 

@@ -140,7 +140,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(planspace_generator_node src/PlanSpaceGenerator.cpp include/PlanSpaceGenerator.h)
 add_executable(planspace_suggester_node src/PlanTree.cpp include/PlanTree.h
-                                        src/PlanSpaceSuggesterNode.cpp include/PlanSpaceSuggesterNode.h)
+        src/PlanSpaceSuggester.cpp include/PlanSpaceSuggester.h src/SuggesterNode.cpp include/SuggesterNode.h)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
