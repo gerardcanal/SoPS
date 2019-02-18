@@ -10,9 +10,12 @@
 #include "rosplan_knowledge_msgs/KnowledgeUpdateServiceArray.h"
 #include "rosplan_dispatch_msgs/CompletePlan.h"
 #include "std_srvs/Empty.h"
+#include "PlanSpaceSuggester.h"
+#include <cstdlib> // rand
 #include <regex>
 #include <fstream>
 #define RESTART_KB_TRIALS 15
+#define N_RANDOM_EXPS 50
 
 class SuggesterNode {
 private:
@@ -27,16 +30,19 @@ private:
     std::string _out_file;
     std::string _planner_output_file;
     int gen_plans_since_restart;
+    PlanSpaceSuggester pss;
 
 
-    void setKBValues(const std::vector<int>& assignments);
+    void setKBValues(const Assignment& assignments);
     void planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan);
+    void restartKB();
 
-    double planOnce(const std::vector<int>& assignments);
+    double planOnce(const Assignment& assignments);
+    void runExperiment(const Assignment &assignments, const std::string &exp_name, int trials=10);
 public:
     SuggesterNode(ros::NodeHandle& nh);
     ~SuggesterNode() = default;
-    void runExperiments();
+    void runExperiments(const std::string& planspace_path);
 };
 
 

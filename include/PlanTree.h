@@ -17,7 +17,7 @@
 
 typedef std::vector<int> State; // Represents a state assignment of relevant predicates
 typedef std::vector<bool> bState; // Represents a state assignment of relevant predicates
-typedef std::vector<std::pair<size_t, int>> Assignment;
+typedef std::vector<std::pair<size_t, int>> Assignment; // means pref[first] = value[second]
 
 class StateDict {
 private:
@@ -44,9 +44,11 @@ public:
     static size_t getStateId(const State& s);
     static bool hasState(const State& s);
     static size_t numPredicates();
+    static size_t numValues(const std::string& pred);
     static bState diff(const State& a, const State& b, const bState& mask);
     static bool match(const Assignment &a, const State &s);
     static std::string getPredName(size_t id);
+    static std::string getPredType(size_t id);
     static std::string getPredValue(const std::string& pred_name, size_t value);
     static bState computeMask(const Assignment& a);
 };

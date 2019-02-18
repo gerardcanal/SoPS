@@ -4,6 +4,7 @@
 	<arg name="domain_path"					default="/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_fitting_domain.rddl"/>
 	<arg name="problem_path"				default="/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_fitting_instance.rddl" />
 	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/shoe_plans.txt"/>
+	<param name="/experiments_results_file" 	value="/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt"/>
 
 	<include file="rosplan_full.launch">
 		<arg name="domain_path"				value="$(arg domain_path)"/>

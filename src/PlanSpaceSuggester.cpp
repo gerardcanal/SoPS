@@ -170,15 +170,15 @@ Suggestion PlanSpaceSuggester::computeNodeSuggestion(const std::vector<bState> &
 }
 
 // Previous assignments are already passed
-std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment assignment) {
+std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment& assignment, int n) {
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
     if (max_r_child.max_reward_idx == -1) return sgg; // No suggestion, we're done!
     double max_r = max_r_child.reward[max_r_child.max_reward_idx];
-    int n = 0;
+    int i = 0;
 
-    while (curr_r < max_r) {
+    while ((n < 0 or i < n) and /*curr_r < max_r or*/ (assignment.size() < StateDict::numPredicates())) {
         // Get Suggestion
         Suggestion s = suggestChanges(pt, assignment);
         assignment.insert(assignment.end(), s.assignments.begin(), s.assignments.end());
@@ -187,7 +187,7 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
         //curr_r = s.reward;
 
         // Print suggestion
-        std::cout << "Suggestion " << ++n << ": ";
+        std::cout << "Suggestion " << i+1 << ": ";
         for (auto ai = s.assignments.begin(); ai != s.assignments.end(); ++ai) {
             std::string predname = StateDict::getPredName(ai->first);
             std::cout << predname << " = " << StateDict::getPredValue(predname, ai->second) << " (" << ai->first
@@ -201,6 +201,7 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
 
         // Update tree with the suggestion
         pt.recomputeMaxs(assignment);
+        ++i;
     }
     return sgg;
 }
@@ -208,15 +209,16 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
 
 int main_(int argc, char* argv[]) {
     std::cout << "Hello" << std::endl;
-    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
-    StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
+    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/shoe_planslongest.txt");
-    //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
-    PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
+    PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
     std::cout << "Tree size: " << pt.size() << std::endl;
 
     PlanSpaceSuggester n;
-    n.getMinSuggestions(pt);
+    Assignment a;
+    n.getMinSuggestions(pt, a);
     exit(0);
 
 

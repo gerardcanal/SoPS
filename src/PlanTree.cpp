@@ -158,6 +158,19 @@ std::string StateDict::getPredValue(const std::string &pred_name, size_t value) 
     return _type_values[_state_types[pred_name].first][value];
 }
 
+std::string StateDict::getPredType(size_t id) {
+    for (auto it: _state_types) {
+        if (it.second.second == id) return it.second.first;
+    }
+    return "NOTFOUND";
+}
+
+// numValues of a predicate
+size_t StateDict::numValues(const std::string &pred) {
+    assert(_state_types.find(pred) != _state_types.end());
+    return _type_values[_state_types[pred].first].size();
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ActionDict class
 

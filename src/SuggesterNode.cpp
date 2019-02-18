@@ -16,11 +16,11 @@ SuggesterNode::SuggesterNode(ros::NodeHandle &nh) : _nh(nh) {
 
     _plan_subs = _nh.subscribe("/rosplan_parsing_interface/complete_plan", 1, &SuggesterNode::planCb, this);
 
-    if (!nh.getParam("/planspace_file", _out_file)) {
-        ROS_ERROR("/planspace_file parameter not set!");
+    if (!nh.getParam("/experiments_results_file", _out_file)) {
+        ROS_ERROR("/experiments_results_file parameter not set!");
         ros::shutdown();
     }
-    ROS_INFO_STREAM("Writing generated plans to " << _out_file);
+    ROS_INFO_STREAM("Writing results to " << _out_file);
     if (!nh.getParam("/rosplan_planner_interface/data_path", _planner_output_file)) {
         ROS_ERROR("/rosplan_planner_interface/data_path parameter not set!");
         ros::shutdown();
@@ -28,15 +28,15 @@ SuggesterNode::SuggesterNode(ros::NodeHandle &nh) : _nh(nh) {
     _planner_output_file += "plan.pddl";
 }
 
-void SuggesterNode::setKBValues(const std::vector<int>& assignments) { // Todo: change assignment type and use dicts
+void SuggesterNode::setKBValues(const Assignment& assignments) {
     rosplan_knowledge_msgs::KnowledgeUpdateServiceArray kua;
 
     for (int i = 0; i < assignments.size(); ++i) {
         rosplan_knowledge_msgs::KnowledgeItem ki;
         ki.knowledge_type = ki.FUNCTION;
-        //TODO ki.attribute_name = _pref_types[i].first;
-        //TODO ki.instance_type = _pref_types[i].second;
-        ki.function_value = assignments[i];
+        ki.attribute_name = StateDict::getPredName(assignments[i].first);//_pref_types[i].first;
+        ki.instance_type = StateDict::getPredType(assignments[i].first);//_pref_types[i].second;
+        ki.function_value = assignments[i].second;
         ki.is_negative = false;
 
         kua.request.update_type.push_back(kua.request.ADD_KNOWLEDGE);
@@ -49,6 +49,7 @@ void SuggesterNode::setKBValues(const std::vector<int>& assignments) { // Todo: 
 }
 
 void SuggesterNode::planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan) {
+    _plan.clear();
     for (auto it = plan->plan.begin(); it != plan->plan.end(); ++it) {
         std::string params = "";
         for (auto pit = it->parameters.begin(); pit != it->parameters.end(); ++pit) {
@@ -61,7 +62,7 @@ void SuggesterNode::planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan) {
     }
 }
 
-double SuggesterNode::planOnce(const std::vector<int>& assignments) {
+double SuggesterNode::planOnce(const Assignment& assignments) {
     // Set all the KB once before planning
     setKBValues(assignments);
 
@@ -104,6 +105,7 @@ double SuggesterNode::planOnce(const std::vector<int>& assignments) {
             ROS_WARN("Plan didn't reach the goal!");
             ++nongoal_attempts;
         }
+        else break; // Break te nongoal_attempts loop
     }
     if (nongoal_attempts == 10) {
         ROS_WARN("TOO MANY ATTEMPTS WITHOUT GOAL!");
@@ -125,26 +127,93 @@ double SuggesterNode::planOnce(const std::vector<int>& assignments) {
         }
     }
 
-
-    ++gen_plans_since_restart;
-
-    if (gen_plans_since_restart > RESTART_KB_TRIALS) {
-        // Kill KB and wait for restart
-        system("rosnode kill /rosplan_knowledge_base");
-        ros::service::waitForService("/rosplan_knowledge_base/update", -1);
-        gen_plans_since_restart = 0;
-    }
+    /*++gen_plans_since_restart;
+    if (gen_plans_since_restart > RESTART_KB_TRIALS)*/ restartKB();
     return std::stod(reward);
 }
 
-/*    // WRITE TO FILE
-    std::ofstream outfile;
-    _plan.clear();
-    outfile.close();*/
+
+void SuggesterNode::runExperiment(const Assignment &assignments, const std::string &exp_name, int trials) {
+    // Run 10 tasks of each
+    for (int i = 0; i < trials; ++i) {
+        double reward = planOnce(assignments);
+        std::ofstream outfile;
+        outfile.open(_out_file, std::ios::out | std::ios::app);
+        // TYPE, REWARD, NCHANGES/SUGGESTIONS,
+        outfile << exp_name << ", " << reward << ", " << assignments.size() << ",";
+
+        for (auto it: assignments) {
+            outfile << " " << StateDict::getPredName(it.first) << "=" << StateDict::getPredValue(StateDict::getPredName(it.first), it.second);
+        }
+        outfile << ",";
+        for (auto it: assignments) {
+            outfile << " " << it.first << "=" << it.second;
+        }
+        outfile << std::endl;
+        outfile.close();
+    }
+}
+
+void SuggesterNode::runExperiments(const std::string& planspace_path) {
+    // FIRST/BASELINE: no preference addition
+    std::cout << "Baseline experiment..." << std::endl;
+    runExperiment(Assignment(), "BASELINE");
+
+    // WITH N suggestions
+    for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
+        std::cout << "Experiments for predicates..." << std::endl;
+        // Get assignments!
+        Assignment new_assgns;
+        PlanTree pt(planspace_path);
+        pss.getMinSuggestions(pt, new_assgns, k);
+        runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k));
+    }
+
+    // RANDOM SUGGESTIONS
+    /* initialize random seed: */
+    srand (time(NULL));
+    for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
+        for (int r = 0; r < N_RANDOM_EXPS; ++r) {
+            std::cout << "Random experiment " << r+1 << " with " << k << " suggestions of predicates..." << std::endl;
+            Assignment new_assgns;
+            std::set<size_t> used;
+            for (int as = 0; as < k; ++as) {
+                size_t pred = rand()%StateDict::numPredicates();
+                while (used.count(pred) > 0) pred = rand()%StateDict::numPredicates();
+                used.insert(pred);
+                int val = (rand()%(StateDict::numValues(StateDict::getPredName(pred))-1))+1; // -1 to remove the unknown, +1 to move from the 0
+                new_assgns.push_back(std::make_pair(pred, val));
+            }
+            runExperiment(new_assgns, "RANDOM-"+std::to_string(k));
+
+            PlanTree pt(planspace_path);
+            pss.getMinSuggestions(pt, new_assgns, k);
+            runExperiment(new_assgns, "RAND+SUGG-"+std::to_string(k));
+        }
+    }
+}
+
+void SuggesterNode::restartKB() {
+    // Kill KB and wait for restart
+    system("rosnode kill /rosplan_knowledge_base > /dev/null");
+    ros::service::waitForService("/rosplan_knowledge_base/update", -1);
+    gen_plans_since_restart = 0;
+    ros::Duration(0.5).sleep(); // Just in case...
+}
 
 int main(int argc, char* argv[]) {
     ros::init(argc, argv, "planspace_suggester");
     ros::NodeHandle n;
     SuggesterNode sn(n);
 
+    // Load data
+    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
+
+    //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
+    //std::cout << "Tree size: " << pt.size() << std::endl;
+
+    // RUN!
+    sn.runExperiments("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
 }

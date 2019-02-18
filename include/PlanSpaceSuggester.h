@@ -38,7 +38,7 @@ public:
 
     std::vector<DiffResults> getMaxChildDiffs(NodePtr root, const bState& mask);
     Suggestion suggestChanges(PlanTree pt, const Assignment& mask);
-    std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment assignment = Assignment());
+    std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment& assignment, int n=-1);
 
     Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS_NORM);
