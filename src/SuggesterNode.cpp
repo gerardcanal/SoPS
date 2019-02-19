@@ -166,6 +166,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
         Assignment new_assgns;
         PlanTree pt(planspace_path);
         pss.getMinSuggestions(pt, new_assgns, k);
+        new_assgns.erase(new_assgns.begin()+k, new_assgns.end());
         runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k));
     }
 
@@ -174,21 +175,26 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
     srand (time(NULL));
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
         for (int r = 0; r < N_RANDOM_EXPS; ++r) {
-            std::cout << "Random experiment " << r+1 << " with " << k << " suggestions of predicates..." << std::endl;
-            Assignment new_assgns;
+            std::cout << "Random experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
+            Assignment rnd_assgns;
             std::set<size_t> used;
             for (int as = 0; as < k; ++as) {
                 size_t pred = rand()%StateDict::numPredicates();
                 while (used.count(pred) > 0) pred = rand()%StateDict::numPredicates();
                 used.insert(pred);
                 int val = (rand()%(StateDict::numValues(StateDict::getPredName(pred))-1))+1; // -1 to remove the unknown, +1 to move from the 0
-                new_assgns.push_back(std::make_pair(pred, val));
+                rnd_assgns.push_back(std::make_pair(pred, val));
             }
-            runExperiment(new_assgns, "RANDOM-"+std::to_string(k));
+            runExperiment(rnd_assgns, "RANDOM-"+std::to_string(k));
 
-            PlanTree pt(planspace_path);
-            pss.getMinSuggestions(pt, new_assgns, k);
-            runExperiment(new_assgns, "RAND+SUGG-"+std::to_string(k));
+            for (size_t k1 = 1; k1 <= (StateDict::numPredicates()-k); ++k1) {
+                std::cout << "Random experiment " << r+1 << " with " << k << "random predicates and " << k1 << " suggestions of predicates..." << std::endl;
+                Assignment new_assigns = rnd_assgns;
+                PlanTree pt(planspace_path);
+                pss.getMinSuggestions(pt, new_assigns, k1);
+                new_assigns.erase(new_assigns.begin() + k+k1, new_assigns.end());
+                runExperiment(new_assigns, "RAND-"+std::to_string(k)+"+SUGG-" + std::to_string(k1));
+            }
         }
     }
 }

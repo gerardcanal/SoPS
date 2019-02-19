@@ -171,6 +171,8 @@ Suggestion PlanSpaceSuggester::computeNodeSuggestion(const std::vector<bState> &
 
 // Previous assignments are already passed
 std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment& assignment, int n) {
+    if (not assignment.empty()) pt.recomputeMaxs(assignment);
+
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
@@ -197,7 +199,6 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
 
         // Store suggestion
         sgg.push_back(s);
-
 
         // Update tree with the suggestion
         pt.recomputeMaxs(assignment);
