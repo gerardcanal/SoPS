@@ -4,7 +4,7 @@ import numpy as np # mean, std, var
 import re
 
 NSUGGESTIONS = 8
-SAME_START = True
+SAME_START = False
 
 def split_csv_line(line):
     return re.compile(",\s?").split(line)
@@ -70,7 +70,10 @@ def plot(data, show=True):
     # Final
     plt.title('Results shoe domain')
     plt.ylabel('Reward')
-    plt.xlabel('Known predicates')
+    if SAME_START:
+        plt.xlabel('Suggestions')
+    else:
+        plt.xlabel('Known predicates')
     ax.legend()
     #plt.savefig(PLOT_SAVE_PATH, format='svg', bbox_inches='tight')
     if show:
