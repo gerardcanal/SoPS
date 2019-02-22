@@ -4,6 +4,7 @@ import numpy as np # mean, std, var
 import re
 
 NSUGGESTIONS = 8
+SAME_START = True
 
 def split_csv_line(line):
     return re.compile(",\s?").split(line)
@@ -27,9 +28,13 @@ def prepare_data(data):
     rs = re.compile(r'SUGGESTIONS-(\d+)')
     newdata = {}  # Key will be the xtick point of the data
 
-    for i in xrange(NSUGGESTIONS):
-        newdata['RANDOM '+str(i+1) + ' + PSS'] = (range(NSUGGESTIONS-i), [-1] * (NSUGGESTIONS-i))
-    newdata['PSS'] = (range(1, NSUGGESTIONS+1), [-1]*NSUGGESTIONS)
+    if SAME_START:
+        for i in xrange(NSUGGESTIONS):
+            newdata['RANDOM '+str(i+1) + ' + PSS'] = (range(NSUGGESTIONS-i), [-1] * (NSUGGESTIONS-i))
+    else:
+        for i in xrange(NSUGGESTIONS):
+            newdata['RANDOM ' + str(i + 1) + ' + PSS'] = (range(i+1, NSUGGESTIONS + 1), [-1] * (NSUGGESTIONS - i))
+    newdata['PSS'] = (range(0, NSUGGESTIONS+1), [-1]*(NSUGGESTIONS+1))
 
     for k, v in data.iteritems():
         if 'RANDOM' in k:
@@ -40,7 +45,7 @@ def prepare_data(data):
             newdata['RANDOM ' + m.group(1) + ' + PSS'][1][int(m.group(2))] = np.mean(v[1])
         elif 'SUGGESTION' in k:
             m = re.search(rs, k)
-            newdata['PSS'][1][int(m.group(1))-1] = np.mean(v[1])
+            newdata['PSS'][1][int(m.group(1))] = np.mean(v[1])
         elif 'BASELINE' in k:
             newdata['PSS'][1][0] = np.mean(v[1])
         else:
@@ -65,7 +70,7 @@ def plot(data, show=True):
     # Final
     plt.title('Results shoe domain')
     plt.ylabel('Reward')
-    plt.xlabel('Suggestions')
+    plt.xlabel('Known predicates')
     ax.legend()
     #plt.savefig(PLOT_SAVE_PATH, format='svg', bbox_inches='tight')
     if show:

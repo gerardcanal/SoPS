@@ -157,7 +157,7 @@ void SuggesterNode::runExperiment(const Assignment &assignments, const std::stri
 void SuggesterNode::runExperiments(const std::string& planspace_path) {
     // FIRST/BASELINE: no preference addition
     std::cout << "Baseline experiment..." << std::endl;
-    runExperiment(Assignment(), "BASELINE");
+    runExperiment(Assignment(), "BASELINE", N_PLANNER_TRIALS_NONRANDOM);
 
     // WITH N suggestions
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
@@ -167,7 +167,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
         PlanTree pt(planspace_path);
         pss.getMinSuggestions(pt, new_assgns, k);
         new_assgns.erase(new_assgns.begin()+k, new_assgns.end());
-        runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k));
+        runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k), N_PLANNER_TRIALS_NONRANDOM);
     }
 
     // RANDOM SUGGESTIONS
@@ -193,7 +193,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
                 PlanTree pt(planspace_path);
                 pss.getMinSuggestions(pt, new_assigns, k1);
                 new_assigns.erase(new_assigns.begin() + k+k1, new_assigns.end());
-                runExperiment(new_assigns, "RAND-"+std::to_string(k)+"+SUGG-" + std::to_string(k1));
+                runExperiment(new_assigns, "RAND-"+std::to_string(k)+"+SUGG-" + std::to_string(k1), N_PLANNER_TRIALS_RDM);
             }
         }
     }
