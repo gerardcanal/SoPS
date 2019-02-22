@@ -16,6 +16,7 @@
 #include <fstream>
 #define RESTART_KB_TRIALS 15
 #define N_RANDOM_EXPS 50
+#define N_PLANNER_TRIALS 20
 
 class SuggesterNode {
 private:
@@ -38,7 +39,7 @@ private:
     void restartKB();
 
     double planOnce(const Assignment& assignments);
-    void runExperiment(const Assignment &assignments, const std::string &exp_name, int trials=10);
+    void runExperiment(const Assignment &assignments, const std::string &exp_name, int trials=N_PLANNER_TRIALS);
 public:
     SuggesterNode(ros::NodeHandle& nh);
     ~SuggesterNode() = default;
