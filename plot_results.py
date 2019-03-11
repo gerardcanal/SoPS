@@ -15,11 +15,18 @@ def parse_csv(filepath):
     with open(filepath, 'r') as f:
         for l in f:
             split = split_csv_line(l)
+            if len(split) == 1:
+                continue
             if split[0] not in data:
                 data[split[0]] = (split[2], [])
             data[split[0]][1].append(float(split[1]))
     return data
 
+
+def mode(x):
+    values, counts = np.unique(x, return_counts=True)
+    m = counts.argmax()
+    return values[m]#, counts[m]
 
 # Prepares the data for the plot
 def prepare_data(data):
@@ -53,10 +60,13 @@ def prepare_data(data):
     return newdata
 
 
-def plot_one(x, y, label, ax, width=1, color=None):
+def plot_one(x, y, label, ax, width=1, color=None, std=True):
     #x_idxs = range(len(x))
     line2, = ax.plot(x, y, '.-', linewidth=width, label=label, color=color, )
     #plt.xticks(x_idxs, x, rotation=90)
+    if std:
+        sigma = np.std(y)
+        ax.fill_between(x, y+sigma, y-sigma, facecolor=line2.get_c(), alpha=0.5)
 
 
 def plot(data, show=True):
@@ -82,7 +92,13 @@ def plot(data, show=True):
 
 if __name__ == '__main__':
     path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
+    path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
+    #path = '/tmp/shoe_results.txt'
     data = parse_csv(path)
+
+    #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
+    #data.update(data2)
+
     data = prepare_data(data)
     plot(data)
     print 'Done'
