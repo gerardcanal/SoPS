@@ -62,7 +62,7 @@ void SuggesterNode::planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan) {
     }
 }
 
-double SuggesterNode::planOnce(const Assignment& assignments) {
+double SuggesterNode::planOnce(const Assignment& assignments, bool& found_reward) {
     // Set all the KB once before planning
     setKBValues(assignments);
 
@@ -119,16 +119,22 @@ double SuggesterNode::planOnce(const Assignment& assignments) {
     std::string line, reward;
     std::regex e(".*Round reward: (.*)$");
     std::smatch m;
+    found_reward = false;
     while (std::getline(planfile, line)) {
         std::regex_search(line, m, e);
         if (!m.empty()) {
             reward = m[1]; // Get first matched subgroup
+            found_reward = true;
             break;
         }
     }
 
     /*++gen_plans_since_restart;
     if (gen_plans_since_restart > RESTART_KB_TRIALS)*/ restartKB();
+    if (not found_reward) {
+        ROS_ERROR_STREAM("Failed to parse reward!");
+        return 0;
+    }
     return std::stod(reward);
 }
 
@@ -136,7 +142,13 @@ double SuggesterNode::planOnce(const Assignment& assignments) {
 void SuggesterNode::runExperiment(const Assignment &assignments, const std::string &exp_name, int trials) {
     // Run 10 tasks of each
     for (int i = 0; i < trials; ++i) {
-        double reward = planOnce(assignments);
+        bool found_reward = false;
+        double reward = planOnce(assignments, found_reward);
+        if (not found_reward) {
+            --i; // repeat iteration
+            continue;
+        }
+
         std::ofstream outfile;
         outfile.open(_out_file, std::ios::out | std::ios::app);
         // TYPE, REWARD, NCHANGES/SUGGESTIONS,
@@ -174,8 +186,10 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
     /* initialize random seed: */
     srand (time(NULL));
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
-        for (int r = 0; r < N_RANDOM_EXPS; ++r) {
-            std::cout << "Random experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
+        int r = 0;
+        //if (k == 7) r = 31;
+        for (; r < N_RANDOM_EXPS; ++r) {
+            std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
             Assignment rnd_assgns;
             std::set<size_t> used;
             for (int as = 0; as < k; ++as) {
@@ -188,7 +202,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
             runExperiment(rnd_assgns, "RANDOM-"+std::to_string(k));
 
             for (size_t k1 = 1; k1 <= (StateDict::numPredicates()-k); ++k1) {
-                std::cout << "Random experiment " << r+1 << " with " << k << "random predicates and " << k1 << " suggestions of predicates..." << std::endl;
+                std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates and " << k1 << " suggestions of predicates..." << std::endl;
                 Assignment new_assigns = rnd_assgns;
                 PlanTree pt(planspace_path);
                 pss.getMinSuggestions(pt, new_assigns, k1);

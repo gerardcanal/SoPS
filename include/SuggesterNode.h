@@ -39,7 +39,7 @@ private:
     void planCb(rosplan_dispatch_msgs::CompletePlanConstPtr plan);
     void restartKB();
 
-    double planOnce(const Assignment& assignments);
+    double planOnce(const Assignment& assignments, bool& found_reward);
     void runExperiment(const Assignment &assignments, const std::string &exp_name, int trials=N_PLANNER_TRIALS_RDM);
 public:
     SuggesterNode(ros::NodeHandle& nh);

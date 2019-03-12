@@ -34,7 +34,7 @@ void PlanSpaceSuggester::join(std::vector<DiffResults> &a,
 
 // Returns the diff matrices of the childs with max reward (recursive to whole tree starting at node n)
 // Each diffresults includes the diff matrix, the associated metric and the node source of comparison.
-// Mask: see SateDict::diff()
+// Mask: see SateDict::diff() GetPromisingNodes
 std::vector<DiffResults> PlanSpaceSuggester::getMaxChildDiffs(NodePtr n, const bState& mask) {
     //State suggestions(StateDict::numPredicates());
 
@@ -92,7 +92,7 @@ Suggestion PlanSpaceSuggester::suggestChanges(PlanTree pt, const Assignment& ass
     }
     sigma /= (allchildDiffs.size()-1);
 
-    std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
+    //std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
 
     return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
 }

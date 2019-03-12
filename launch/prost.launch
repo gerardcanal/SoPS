@@ -12,7 +12,8 @@
 		<arg name="planning_language" 		value="RDDL" />
 		<arg name="generated_problem_path"  value="$(find rosplan_demos)/common/problem.rddl" />
 		<arg name="planner_interface" 		value="rddlsim_planner_interface" />
-		<arg name="planner_command" 		value="timeout 40 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />
+		<arg name="planner_command" 		value="timeout 90 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />
+		<!--<arg name="planner_command" 		value="timeout 40 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />-->
 		<arg name="dispatcher" 				value="$(arg dispatcher)" />
 	</include>
 </launch>
