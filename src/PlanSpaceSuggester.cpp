@@ -53,7 +53,7 @@ std::vector<DiffResults> PlanSpaceSuggester::getMaxChildDiffs(NodePtr n, const b
         }
 
         // Compute metric
-        if (not d.S.empty()) { // If it's empty it means there's only one valid child.
+        if (not d.S.empty() and sumMat(d.S) > 0) { // If it's empty it means there's only one valid child.
             d.node = std::make_shared<NodeInfo>(c);
             d.metric = computeNodeMetric(c_id, n, d.S);
             ret.push_back(d);
@@ -205,6 +205,14 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
         ++i;
     }
     return sgg;
+}
+
+int PlanSpaceSuggester::sumMat(std::vector<bState> v) {
+    int s = 0;
+    for (size_t i = 0; i < v.size(); ++i) {
+        for (size_t j = 0; j < v[i].size(); ++j) s += v[i][j];
+    }
+    return s;
 }
 
 

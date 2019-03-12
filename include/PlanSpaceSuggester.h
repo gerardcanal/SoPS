@@ -42,6 +42,8 @@ public:
 
     Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS_NORM);
+
+    int sumMat(std::vector<bState> vector);
 };
 
 
