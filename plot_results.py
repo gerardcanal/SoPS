@@ -2,6 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np # mean, std, var
 import re
+import os
 
 NSUGGESTIONS = 8
 SAME_START = False
@@ -81,7 +82,7 @@ def plot_one(x, y, label, ax, width=1, color=None, std=True):
         ax.fill_between(x, np.add(y, std), np.subtract(y, std), facecolor=line2.get_c(), alpha=0.5)
 
 
-def plot(data, show=True, std=True):
+def plot(data, plot_path, show=True, std=False, ):
     fig, ax = plt.subplots()
 
     for k, v in sorted(data.iteritems()):
@@ -97,7 +98,8 @@ def plot(data, show=True, std=True):
     else:
         plt.xlabel('Known predicates')
     ax.legend()
-    #plt.savefig(PLOT_SAVE_PATH, format='svg', bbox_inches='tight')
+    print "Saving plot to", plot_path
+    plt.savefig(plot_path, format='svg', bbox_inches='tight')
     if show:
         plt.show()
 
@@ -105,13 +107,16 @@ def plot(data, show=True, std=True):
 if __name__ == '__main__':
     path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
     path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
+    path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt'
+    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt'
     #path = '/tmp/shoe_results.txt'
     data = parse_csv(path)
 
 
     #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
     #data = join(data, data2)
+    #data.update(data2)
 
     data = prepare_data(data)
-    plot(data)
+    plot(data, plot_path=os.getcwd()+"/shoe_results.svg")
     print 'Done'

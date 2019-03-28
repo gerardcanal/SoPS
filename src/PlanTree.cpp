@@ -46,6 +46,7 @@ size_t StateDict::addState(const State& s) {
     return i;
 }
 
+// Loads a file with the preference predicates and its types
 void StateDict::loadPredicates(const std::string &path) {
     std::ifstream pred_definiton_file;
     pred_definiton_file.open(path);
