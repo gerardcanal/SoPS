@@ -3,11 +3,11 @@
 	<arg name="dispatcher"              	default="simple" /> <!-- simple, esterel or online -->
 	<arg name="domain_path"					default="/home/gcanal/Dropbox/PrefsIROS19/domains/no_prefs/feeding_domain.rddl"/>
 	<arg name="problem_path"				default="/home/gcanal/Dropbox/PrefsIROS19/domains/no_prefs/feeding_instance.rddl" />
-	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/shoe_plans.txt"/>
+	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/feeding_plans.txt"/>
 
 
 
-	<param name="/experiments_results_file" 	value="/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt"/>
+	<param name="/experiments_results_file" 	value="/home/gcanal/Dropbox/PrefsIROS19/feeding_results.txt"/>
 
 	<include file="rosplan_full.launch">
 		<arg name="domain_path"				value="$(arg domain_path)"/>
@@ -18,11 +18,11 @@
 		<arg name="planner_interface" if="$(eval dispatcher == 'online')"  value="online_planner_interface" />
 
 		<!-- simple -->
-		<arg name="planner_command" if="$(eval dispatcher == 'simple')" value="timeout 90 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />
+		<arg name="planner_command" if="$(eval dispatcher == 'simple')" value="timeout 90 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;"/>
 		<!--<arg name="planner_command" if="$(eval dispatcher == 'simple')" value="timeout 40 $(find rosplan_planning_system)/common/bin/prost/run_prost.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />-->
 
 		<!-- online -->
-		<arg name="planner_command" if="$(eval dispatcher == 'online')"	value="$(find rosplan_planning_system)/common/bin/prost/run_prost_online.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />
+		<arg name="planner_command" if="$(eval dispatcher == 'online')"	value="$(find rosplan_planning_system)/common/bin/prost/run_prost_online.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot; /tmp/prostout.txt" />
 		<!--<arg name="planner_command" if="$(eval dispatcher == 'online')"	value="$(find rosplan_planning_system)/common/bin/prost/run_prost_online.sh DOMAIN PROBLEM &quot;[PROST -s 1 -se [THTS -act [UCB1] -out [UMC] -backup [PB] -init [Expand -h [IDS]] -t 1.0 ]]&quot;" />-->
 		<arg name="dispatcher" 				value="$(arg dispatcher)" />
 	</include>

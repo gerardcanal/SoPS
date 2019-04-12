@@ -8,7 +8,7 @@
 PlanSpaceGenerator::PlanSpaceGenerator(ros::NodeHandle &nh) : _nh(nh){
 
     // SHOE TODO: get from launchfile?
-    _pref_types = {
+    /*_pref_types = {
             {"p_motor_rightleg", "t_threelevel"},
             {"p_motor_leftleg", "t_threelevel"},
             {"p_motor_rightfoot", "t_threelevel"},
@@ -17,7 +17,25 @@ PlanSpaceGenerator::PlanSpaceGenerator(ros::NodeHandle &nh) : _nh(nh){
             {"p_force", "t_threelevel"},
             {"p_information_providing", "t_infoprov"},
             {"p_petitions", "t_petitions"}
+    };*/
+    // JACKET
+    _pref_types = {
+            {"p_motor_rightarm", "t_threelevel"},
+            {"p_motor_leftarm", "t_threelevel"},
+            {"p_speed", "t_threelevel"},
+            {"p_force", "t_threelevel"},
+            {"p_information_providing", "t_infoprov"},
+            {"p_prox_torso", "t_threelevel"}
     };
+    // FEEDING
+    /*_pref_types = {
+            {"p_motor_head", "t_threelevel"},
+            {"p_speed", "t_threelevel"},
+            {"p_force", "t_threelevel"},
+            {"p_information_providing", "t_infoprov"},
+            {"p_pers_cadence", "t_threelevel"},
+            {"p_prox_head", "t_threelevel"}
+    };*/
 
     gen_plans_since_restart = 0;
     std::string srv_name = "/rosplan_knowledge_base/domain/enumerable_type";
