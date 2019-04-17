@@ -66,7 +66,7 @@ std::vector<DiffResults> PlanSpaceSuggester::getMaxChildDiffs(NodePtr n, const b
 }
 
 // Assignment is the fixed values for the predicates
-Suggestion PlanSpaceSuggester::suggestChanges(PlanTree pt, const Assignment& assignment) {
+Suggestion PlanSpaceSuggester::suggestAdditions(PlanTree pt, const Assignment &assignment) {
     bState mask = StateDict::computeMask(assignment);
     std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot(), mask);
     assert(allchildDiffs.size() > 0);
@@ -95,6 +95,33 @@ Suggestion PlanSpaceSuggester::suggestChanges(PlanTree pt, const Assignment& ass
     //std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
 
     return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
+}
+
+
+Suggestion PlanSpaceSuggester::suggestWithChanges(PlanTree pt, int K, const Assignment &changeable, const Assignment &assignment) {
+    Suggestion s = suggestAdditions(pt, assignment);
+    for (size_t i = 0; i < s.assignments.size(); ++i) {
+        // Check if it appears in the changeable list
+        for (size_t j = 0; j < changeable.size(); ++j) {
+            if ((changeable[j].first == s.assignments[i].first)) {
+                if ((changeable[j].second != s.assignments[i].second) and (abs(changeable[j].second - s.assignments[i].second) < K)) {
+                    std::cout << "CHANGING PREDICATES: " << StateDict::getPredName(changeable[j].first) << " (" <<
+                                 changeable[j].first << ") from " << changeable[j].second  << " to " <<
+                                 s.assignments[i].second << std::endl;
+                    // DO nothing as we return the full suggestion
+                    s.changed = true;
+                }
+                else {
+                    std::cout << "IGNORING CHANGE IN PREDICATES: " << StateDict::getPredName(changeable[j].first) << " (" <<
+                              changeable[j].first << ") from " << changeable[j].second  << " to " <<
+                              s.assignments[i].second << std::endl;
+                    s.assignments[i].second = changeable[j].second; // Set the suggestion to the already known value
+                    s.changed = false;
+                }
+            }
+        }
+    }
+    return s;
 }
 
 
@@ -170,19 +197,24 @@ Suggestion PlanSpaceSuggester::computeNodeSuggestion(const std::vector<bState> &
 }
 
 // Previous assignments are already passed
-std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment& assignment, int n) {
-    if (not assignment.empty()) pt.recomputeMaxs(assignment);
+std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assignment& assignment, int n, bool changes, int chK) {
+    if (not changes and not assignment.empty()) pt.recomputeMaxs(assignment);
 
     std::vector<Suggestion> sgg;
     double curr_r = 0;
     NodeInfo max_r_child = pt.getRoot()->children[getMaxRChildren(pt.getRoot())[0]];
-    if (max_r_child.max_reward_idx == -1) return sgg; // No suggestion, we're done!
-    double max_r = max_r_child.reward[max_r_child.max_reward_idx];
+    if (max_r_child.max_reward_idx == -1) return sgg; // No suggestions left, we're done!
+    //double max_r = max_r_child.reward[max_r_child.max_reward_idx];
     int i = 0;
+
+    Assignment initial = assignment;
+    if (changes) assignment.clear(); // Remove the pre-set assignments for changes
 
     while ((n < 0 or i < n) and /*curr_r < max_r or*/ (assignment.size() < StateDict::numPredicates())) {
         // Get Suggestion
-        Suggestion s = suggestChanges(pt, assignment);
+        Suggestion s;
+        if (changes) s = suggestWithChanges(pt, chK, initial, assignment);
+        else s = suggestAdditions(pt, assignment);
         assignment.insert(assignment.end(), s.assignments.begin(), s.assignments.end());
 
         // Update curr_r

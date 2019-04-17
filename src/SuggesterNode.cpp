@@ -166,21 +166,23 @@ void SuggesterNode::runExperiment(const Assignment &assignments, const std::stri
     }
 }
 
-void SuggesterNode::runExperiments(const std::string& planspace_path) {
-    // FIRST/BASELINE: no preference addition
-    /*std::cout << "Baseline experiment..." << std::endl;
-    runExperiment(Assignment(), "BASELINE", N_PLANNER_TRIALS_NONRANDOM);
+void SuggesterNode::runExperiments(const std::string& planspace_path, bool changes) {
+    if (not changes) {
+        // FIRST/BASELINE: no preference addition
+        std::cout << "Baseline experiment..." << std::endl;
+        runExperiment(Assignment(), "BASELINE", N_PLANNER_TRIALS_NONRANDOM);
 
-    // WITH N suggestions
-    for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
-        std::cout << "Experiments for predicates..." << std::endl;
-        // Get assignments!
-        Assignment new_assgns;
-        PlanTree pt(planspace_path);
-        pss.getMinSuggestions(pt, new_assgns, k);
-        new_assgns.erase(new_assgns.begin()+k, new_assgns.end());
-        runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k), N_PLANNER_TRIALS_NONRANDOM);
-    }*/
+        // WITH N suggestions
+        for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
+            std::cout << "Experiments for predicates..." << std::endl;
+            // Get assignments!
+            Assignment new_assgns;
+            PlanTree pt(planspace_path);
+            pss.getMinSuggestions(pt, new_assgns, k);
+            new_assgns.erase(new_assgns.begin() + k, new_assgns.end());
+            runExperiment(new_assgns, "SUGGESTIONS-" + std::to_string(k), N_PLANNER_TRIALS_NONRANDOM);
+        }
+    }
 
     // RANDOM SUGGESTIONS
     /* initialize random seed: */
@@ -206,7 +208,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
                 std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates and " << k1 << " suggestions of predicates..." << std::endl;
                 Assignment new_assigns = rnd_assgns;
                 PlanTree pt(planspace_path);
-                pss.getMinSuggestions(pt, new_assigns, k1);
+                pss.getMinSuggestions(pt, new_assigns, k1, changes, 1);
                 new_assigns.erase(new_assigns.begin() + k+k1, new_assigns.end());
                 runExperiment(new_assigns, "RAND-"+std::to_string(k)+"+SUGG-" + std::to_string(k1), N_PLANNER_TRIALS_RDM);
             }
@@ -228,7 +230,7 @@ int main(int argc, char* argv[]) {
     SuggesterNode sn(n);
 
     // Load data
-    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    StateDict::loadPredicates("/home/gerard/Desktop/PrefsIROS19/domains/shoe_types.txt");
     //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
 
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
@@ -236,5 +238,5 @@ int main(int argc, char* argv[]) {
     //std::cout << "Tree size: " << pt.size() << std::endl;
 
     // RUN!
-    sn.runExperiments("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    sn.runExperiments("/home/gerard/Desktop/PrefsIROS19/planspace/shoe_plans.txt", true);
 }

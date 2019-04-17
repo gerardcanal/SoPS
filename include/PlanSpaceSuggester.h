@@ -26,6 +26,7 @@ struct Suggestion {
     Assignment assignments;
     int ndiffs;
     double reward; // Suggestion reward -> from the node that generated the suggestion
+    bool changed = false;
 };
 
 class PlanSpaceSuggester {
@@ -37,8 +38,9 @@ public:
     PlanSpaceSuggester();
 
     std::vector<DiffResults> getMaxChildDiffs(NodePtr root, const bState& mask);
-    Suggestion suggestChanges(PlanTree pt, const Assignment& mask);
-    std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment& assignment, int n=-1);
+    Suggestion suggestAdditions(PlanTree pt, const Assignment &assignment);
+    Suggestion suggestWithChanges(PlanTree pt, int K, const Assignment &changeable, const Assignment &assignment=Assignment());
+    std::vector<Suggestion> getMinSuggestions(PlanTree& pt, Assignment& assignment, int n=-1 , bool changes=false, int chK=0);
 
     Suggestion computeNodeSuggestion(const std::vector<bState> &v, NodeInfoPtr ni);
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS_NORM);

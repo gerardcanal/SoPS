@@ -16,7 +16,7 @@
 #include <fstream>
 #define RESTART_KB_TRIALS 15
 #define N_RANDOM_EXPS 50
-#define N_PLANNER_TRIALS_RDM 20
+#define N_PLANNER_TRIALS_RDM 1
 #define N_PLANNER_TRIALS_NONRANDOM 50
 
 class SuggesterNode {
@@ -44,7 +44,7 @@ private:
 public:
     SuggesterNode(ros::NodeHandle& nh);
     ~SuggesterNode() = default;
-    void runExperiments(const std::string& planspace_path);
+    void runExperiments(const std::string& planspace_path, bool changes=false);
 };
 
 
