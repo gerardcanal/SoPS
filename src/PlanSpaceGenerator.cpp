@@ -73,12 +73,13 @@ PlanSpaceGenerator::PlanSpaceGenerator(ros::NodeHandle &nh) : _nh(nh){
 }
 
 #define RESTART_KB_TRIALS 15
+#define PLANS_PER_SET 4
 void PlanSpaceGenerator::generatePlans(int i, std::vector<int>& assignments) {
     if (i == _pref_types.size()) { // END
         // Set all the KB once before planning
         setKBValues(assignments);
         int nongoal_attempts = 0;
-        for (int k = 0; k < 3; ++k) {
+        for (int k = 0; k < PLANS_PER_SET; ++k) {
             std_srvs::Empty empty;
             if (!_gen_problem.call(empty)) {
                 ROS_ERROR("(PlanSpaceGenerator) Failed to call service problem generation");
