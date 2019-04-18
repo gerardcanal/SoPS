@@ -69,32 +69,47 @@ std::vector<DiffResults> PlanSpaceSuggester::getMaxChildDiffs(NodePtr n, const b
 Suggestion PlanSpaceSuggester::suggestAdditions(PlanTree pt, const Assignment &assignment) {
     bState mask = StateDict::computeMask(assignment);
     std::vector<DiffResults> allchildDiffs = getMaxChildDiffs(pt.getRoot(), mask);
-    assert(allchildDiffs.size() > 0);
-    size_t max_m = 0;
-    int equal = 0;
-    double metric_sum = allchildDiffs[0].metric; // Sums all the metrics
-    for (size_t i = 1 ; i < allchildDiffs.size(); ++i) {
-        if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) {
-            max_m = i;
-            equal = 0;
+    //assert(allchildDiffs.size() > 0);
+    if (allchildDiffs.size() > 0) {
+        size_t max_m = 0;
+        int equal = 0;
+        double metric_sum = allchildDiffs[0].metric; // Sums all the metrics
+        for (size_t i = 1; i < allchildDiffs.size(); ++i) {
+            if (allchildDiffs[i].metric > allchildDiffs[max_m].metric) {
+                max_m = i;
+                equal = 0;
+            } else if (allchildDiffs[i].metric == allchildDiffs[max_m].metric) ++equal;
+            metric_sum += allchildDiffs[i].metric;
+            //std::cout <<allchildDiffs[i].metric <<std::endl;
         }
-        else if (allchildDiffs[i].metric == allchildDiffs[max_m].metric) ++equal;
-        metric_sum += allchildDiffs[i].metric;
-        //std::cout <<allchildDiffs[i].metric <<std::endl;
+
+        // Compute deviation
+        double mean = metric_sum / allchildDiffs.size();
+        double sigma = 0;
+        for (size_t i = 0; i < allchildDiffs.size(); ++i) {
+            double aux = allchildDiffs[i].metric - mean;
+            sigma += aux * aux;
+        }
+        sigma /= (allchildDiffs.size() - 1);
+
+        //std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
+
+        return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
     }
-
-    // Compute deviation
-    double mean = metric_sum / allchildDiffs.size();
-    double sigma = 0;
-    for (size_t i = 0 ; i < allchildDiffs.size(); ++i) {
-        double aux = allchildDiffs[i].metric-mean;
-        sigma += aux*aux;
+    else {
+        auto mc = getMaxRChildren(pt.getRoot());
+        assert(mc.size() > 0);
+        auto maxchild = pt.getRoot()->children[mc[0]];
+        Suggestion sug;
+        for (size_t i = 0; i < mask.size(); ++i) {
+            if (mask[i]) {
+                sug.assignments.emplace_back(std::make_pair(i, StateDict::getState(maxchild.state[maxchild.max_reward_idx])[i]));
+            }
+        }
+        sug.reward = maxchild.reward[maxchild.max_reward_idx];
+        sug.ndiffs = 0;
+        return sug;
     }
-    sigma /= (allchildDiffs.size()-1);
-
-    //std::cout << equal << " " << allchildDiffs[max_m].metric << " " << std::sqrt(sigma) <<  std::endl;
-
-    return computeNodeSuggestion(allchildDiffs[max_m].S, allchildDiffs[max_m].node);
 }
 
 
