@@ -48,6 +48,7 @@ void SuggesterNode::setKBValues(const Assignment& assignments) {
         if (!_update_kb.call(kua)) {
             ROS_ERROR("(PlanSpaceGenerator) Failed to call service to update kb");
         }
+        else break;
         ++ntrials;
         ros::Duration(1.0).sleep();
     }
