@@ -16,7 +16,7 @@
 #include <fstream>
 #define RESTART_KB_TRIALS 15
 #define N_RANDOM_EXPS 50
-#define N_PLANNER_TRIALS_RDM 1
+#define N_PLANNER_TRIALS_RDM 20
 #define N_PLANNER_TRIALS_NONRANDOM 50
 
 class SuggesterNode {
