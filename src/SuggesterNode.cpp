@@ -42,9 +42,18 @@ void SuggesterNode::setKBValues(const Assignment& assignments) {
         kua.request.update_type.push_back(kua.request.ADD_KNOWLEDGE);
         kua.request.knowledge.push_back(ki);
     }
-    if (!_update_kb.call(kua)) {
-        ROS_ERROR("(PlanSpaceGenerator) Failed to call service to update kb");
-        ros::shutdown();
+    int ntrials = 0;
+    const int MAX_TRIALS=10;
+    while (ntrials < MAX_TRIALS) {
+        if (!_update_kb.call(kua)) {
+            ROS_ERROR("(PlanSpaceGenerator) Failed to call service to update kb");
+        }
+        ++ntrials;
+        ros::Duration(1.0).sleep();
+    }
+    if (ntrials >= MAX_TRIALS) {
+        ROS_ERROR("(PlanSpaceGenerator) Failed too many times to call service to update kb!");
+        exit(1);
     }
 }
 
