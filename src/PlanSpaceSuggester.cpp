@@ -117,24 +117,26 @@ Suggestion PlanSpaceSuggester::suggestWithChanges(PlanTree pt, int K, const Assi
     Suggestion s = suggestAdditions(pt, assignment);
     for (size_t i = 0; i < s.assignments.size(); ++i) {
         // Check if it appears in the changeable list
+        bool is_changeable = false;
         for (size_t j = 0; j < changeable.size(); ++j) {
             if ((changeable[j].first == s.assignments[i].first)) {
-                if ((changeable[j].second != s.assignments[i].second) and (abs(changeable[j].second - s.assignments[i].second) < K)) {
+                is_changeable = true;
+                if ((changeable[j].second != s.assignments[i].second) and (abs(changeable[j].second - s.assignments[i].second) <= K)) {
                     std::cout << "CHANGING PREDICATES: " << StateDict::getPredName(changeable[j].first) << " (" <<
                                  changeable[j].first << ") from " << changeable[j].second  << " to " <<
                                  s.assignments[i].second << std::endl;
                     // DO nothing as we return the full suggestion
-                    s.changed = true;
+                    s.nchanges += 1;
                 }
                 else {
                     std::cout << "IGNORING CHANGE IN PREDICATES: " << StateDict::getPredName(changeable[j].first) << " (" <<
                               changeable[j].first << ") from " << changeable[j].second  << " to " <<
                               s.assignments[i].second << std::endl;
                     s.assignments[i].second = changeable[j].second; // Set the suggestion to the already known value
-                    s.changed = false;
                 }
             }
         }
+        if (not is_changeable) s.nadditions += 1;
     }
     return s;
 }
@@ -228,7 +230,10 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
     while ((n < 0 or i < n) and /*curr_r < max_r or*/ (assignment.size() < StateDict::numPredicates())) {
         // Get Suggestion
         Suggestion s;
-        if (changes) s = suggestWithChanges(pt, chK, initial, assignment);
+        if (changes) {
+            s = suggestWithChanges(pt, chK, initial, assignment);
+            if ((s.nadditions + s.nchanges) == 0) --i; // We have not changed or added anything, so we'll fix that predicate and keep on the process
+        }
         else s = suggestAdditions(pt, assignment);
         assignment.insert(assignment.end(), s.assignments.begin(), s.assignments.end());
 
@@ -237,6 +242,10 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
 
         // Print suggestion
         std::cout << "Suggestion " << i+1 << ": ";
+        if (changes) {
+            if (((s.nchanges + s.nadditions) > 0)) std::cout << "(" << s.nchanges << " changed, " << s.nadditions << " added predicates) ";
+            else std::cout << "(nonchanged predicate) ";
+        }
         for (auto ai = s.assignments.begin(); ai != s.assignments.end(); ++ai) {
             std::string predname = StateDict::getPredName(ai->first);
             std::cout << predname << " = " << StateDict::getPredValue(predname, ai->second) << " (" << ai->first
@@ -251,6 +260,19 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
         pt.recomputeMaxs(assignment);
         ++i;
     }
+
+    // Add back the initial preferences, updating in case of change. Merges both
+    if (changes) {
+        for (auto it = initial.begin(); it != initial.end(); ++it) {
+            size_t i = 0;
+            while (i < assignment.size()) {
+                if (it->first == assignment[i].first) break;
+                ++i;
+            }
+            if (i >= assignment.size()) assignment.push_back(*it); // Not found, it's an unchanged assignment
+        }
+    }
+
     return sgg;
 }
 

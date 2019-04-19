@@ -26,7 +26,8 @@ struct Suggestion {
     Assignment assignments;
     int ndiffs;
     double reward; // Suggestion reward -> from the node that generated the suggestion
-    bool changed = false;
+    int nchanges = 0;
+    int nadditions = 0;
 };
 
 class PlanSpaceSuggester {

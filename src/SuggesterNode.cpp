@@ -188,7 +188,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path, bool chang
     /* initialize random seed: */
     srand (time(NULL));
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
-        if (k != 4 and k < 7) continue; //FIXME remove
+        //if (k != 4 and k < 7) continue; //FIXME remove
         int r = 0;
         //if (k == 7) r = 31;
         for (; r < N_RANDOM_EXPS; ++r) {
@@ -209,7 +209,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path, bool chang
                 Assignment new_assigns = rnd_assgns;
                 PlanTree pt(planspace_path);
                 pss.getMinSuggestions(pt, new_assigns, k1, changes, 1);
-                new_assigns.erase(new_assigns.begin() + k+k1, new_assigns.end());
+                if (k+k1 < new_assigns.size()) new_assigns.erase(new_assigns.begin() + k+k1, new_assigns.end());
                 runExperiment(new_assigns, "RAND-"+std::to_string(k)+"+SUGG-" + std::to_string(k1), N_PLANNER_TRIALS_RDM);
             }
         }
@@ -218,7 +218,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path, bool chang
 
 void SuggesterNode::restartKB() {
     // Kill KB and wait for restart
-    system("rosnode kill /rosplan_knowledge_base > /dev/null");
+    system("rosnode kill /rosplan_knowledge_base &> /dev/null");
     ros::service::waitForService("/rosplan_knowledge_base/update", -1);
     gen_plans_since_restart = 0;
     ros::Duration(0.5).sleep(); // Just in case...
