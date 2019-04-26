@@ -166,9 +166,9 @@ void SuggesterNode::runExperiment(const Assignment &assignments, const std::stri
     }
 }
 
-void SuggesterNode::runExperiments(const std::string& planspace_path) {
+void SuggesterNode::runAdditionExperiments(const std::string &planspace_path) {
     // FIRST/BASELINE: no preference addition
-    /*std::cout << "Baseline experiment..." << std::endl;
+    std::cout << "Baseline experiment..." << std::endl;
     runExperiment(Assignment(), "BASELINE", N_PLANNER_TRIALS_NONRANDOM);
 
     // WITH N suggestions
@@ -180,15 +180,15 @@ void SuggesterNode::runExperiments(const std::string& planspace_path) {
         pss.getMinSuggestions(pt, new_assgns, k);
         new_assgns.erase(new_assgns.begin()+k, new_assgns.end());
         runExperiment(new_assgns, "SUGGESTIONS-"+std::to_string(k), N_PLANNER_TRIALS_NONRANDOM);
-    }*/
+    }
 
     // RANDOM SUGGESTIONS
     /* initialize random seed: */
     srand (time(NULL));
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
-        if (k != 4 and k < 7) continue; //FIXME remove
+        //if (/*k != 2 and*/ k < 3) continue; //FIXME remove
         int r = 0;
-        //if (k == 7) r = 31;
+        //if (k == 2) r = 49; //FIXME remove
         for (; r < N_RANDOM_EXPS; ++r) {
             std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
             Assignment rnd_assgns;
@@ -228,13 +228,14 @@ int main(int argc, char* argv[]) {
     SuggesterNode sn(n);
 
     // Load data
-    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/jacket_types.txt");
     //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
+    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_types.txt");
 
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
     //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
     //std::cout << "Tree size: " << pt.size() << std::endl;
 
     // RUN!
-    sn.runExperiments("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
+    sn.runAdditionExperiments("/home/gcanal/Dropbox/PrefsIROS19/planspace/feeding_plans.txt");
 }
