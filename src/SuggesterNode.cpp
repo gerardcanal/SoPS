@@ -204,7 +204,7 @@ void SuggesterNode::runAdditionExperiments(const std::string &planspace_path, bo
     for (size_t k = 1; k <= StateDict::numPredicates(); ++k) {
         //if (k != 4 and k < 7) continue; //FIXME remove
         int r = 0;
-        //if (k == 7) r = 31;
+        //if (k == 2) r = 49; //FIXME remove
         for (; r < N_RANDOM_EXPS; ++r) {
             std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
             Assignment rnd_assgns = generateRandomAssigs(k);

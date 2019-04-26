@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 	<arg name="dispatcher"              	default="simple" /> <!-- simple, esterel or online -->
-	<arg name="domain_path"					default="/home/gcanal/Dropbox/PrefsIROS19/domains/no_prefs/feeding_domain.rddl"/>
-	<arg name="problem_path"				default="/home/gcanal/Dropbox/PrefsIROS19/domains/no_prefs/feeding_instance.rddl" />
+	<arg name="domain_path"					default="/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_domain.rddl"/>
+	<arg name="problem_path"				default="/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_instance.rddl" />
 	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/feeding_plans.txt"/>
 
 

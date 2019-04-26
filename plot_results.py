@@ -4,7 +4,8 @@ import numpy as np # mean, std, var
 import re
 import os
 
-NSUGGESTIONS = 8
+DOMAIN_NAME='feeding'
+NSUGGESTIONS = 6
 SAME_START = False
 
 def split_csv_line(line):
@@ -91,7 +92,7 @@ def plot(data, plot_path, show=True, std=False, ):
         plot_one(x, y, label=k, ax=ax, std=v[2] if std else False)
 
     # Final
-    plt.title('Results shoe domain')
+    plt.title('Results %s domain' % DOMAIN_NAME)
     plt.ylabel('Reward')
     if SAME_START:
         plt.xlabel('Suggestions')
@@ -105,18 +106,21 @@ def plot(data, plot_path, show=True, std=False, ):
 
 
 if __name__ == '__main__':
+    ## Shoe
     path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
     path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
     path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt'
     path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt'
     #path = '/tmp/shoe_results.txt'
-    data = parse_csv(path)
-
-
     #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
     #data = join(data, data2)
     #data.update(data2)
 
+    ## Jacket
+    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt'
+    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'
+    data = parse_csv(path)
+
     data = prepare_data(data)
-    plot(data, plot_path=os.getcwd()+"/shoe_results.svg")
+    plot(data, plot_path=os.getcwd()+"/%s_results.svg" % DOMAIN_NAME)
     print 'Done'
