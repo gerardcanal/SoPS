@@ -7,7 +7,7 @@
 #include "SuggesterNode.h"
 
 
-SuggesterNode::SuggesterNode(ros::NodeHandle &nh) : _nh(nh) {
+SuggesterNode::SuggesterNode(ros::NodeHandle &nh, bool allow_changes) : _nh(nh) {
      _update_kb = _nh.serviceClient<rosplan_knowledge_msgs::KnowledgeUpdateServiceArray>("/rosplan_knowledge_base/update_array");
 
     _gen_problem = _nh.serviceClient<std_srvs::Empty>("/rosplan_problem_interface/problem_generation_server");
@@ -19,13 +19,17 @@ SuggesterNode::SuggesterNode(ros::NodeHandle &nh) : _nh(nh) {
     if (!nh.getParam("/experiments_results_file", _out_file)) {
         ROS_ERROR("/experiments_results_file parameter not set!");
         ros::shutdown();
+        exit(1);
     }
     ROS_INFO_STREAM("Writing results to " << _out_file);
-    if (!nh.getParam("/rosplan_planner_interface/data_path", _planner_output_file)) {
-        ROS_ERROR("/rosplan_planner_interface/data_path parameter not set!");
-        ros::shutdown();
+    if (!allow_changes) { // Planner not needed in changes experiment
+        if (!nh.getParam("/rosplan_planner_interface/data_path", _planner_output_file)) {
+            ROS_ERROR("/rosplan_planner_interface/data_path parameter not set!");
+            ros::shutdown();
+            exit(1);
+        }
+        _planner_output_file += "plan.pddl";
     }
-    _planner_output_file += "plan.pddl";
 }
 
 void SuggesterNode::setKBValues(const Assignment& assignments) {
@@ -176,7 +180,7 @@ void SuggesterNode::runExperiment(const Assignment &assignments, const std::stri
     }
 }
 
-void SuggesterNode::runExperiments(const std::string& planspace_path, bool changes) {
+void SuggesterNode::runAdditionExperiments(const std::string &planspace_path, bool changes) {
     if (not changes) {
         // FIRST/BASELINE: no preference addition
         std::cout << "Baseline experiment..." << std::endl;
@@ -203,15 +207,7 @@ void SuggesterNode::runExperiments(const std::string& planspace_path, bool chang
         //if (k == 7) r = 31;
         for (; r < N_RANDOM_EXPS; ++r) {
             std::cout << "\nRandom experiment " << r+1 << " with " << k << " random predicates..." << std::endl;
-            Assignment rnd_assgns;
-            std::set<size_t> used;
-            for (int as = 0; as < k; ++as) {
-                size_t pred = rand()%StateDict::numPredicates();
-                while (used.count(pred) > 0) pred = rand()%StateDict::numPredicates();
-                used.insert(pred);
-                int val = (rand()%(StateDict::numValues(StateDict::getPredName(pred))-1))+1; // -1 to remove the unknown, +1 to move from the 0
-                rnd_assgns.push_back(std::make_pair(pred, val));
-            }
+            Assignment rnd_assgns = generateRandomAssigs(k);
             runExperiment(rnd_assgns, "RANDOM-"+std::to_string(k));
 
             for (size_t k1 = 1; k1 <= (StateDict::numPredicates()-k); ++k1) {
@@ -226,6 +222,48 @@ void SuggesterNode::runExperiments(const std::string& planspace_path, bool chang
     }
 }
 
+void SuggesterNode::runChangesExperiments(const std::string &planspace_path) {
+    // no need to replan!
+    std::ofstream outfile;
+    outfile.open(_out_file, std::ios::out | std::ios::app);
+    srand(time(NULL)); // Initialize random seed
+
+    for (size_t k = 0; k <= StateDict::numPredicates(); ++k) {
+        ROS_INFO_STREAM("Changes experiment " << k << " random predicates..");
+        for (int r = 0; r < N_RANDOM_CHANGE_EXPS; ++r) {
+            if (r%100 == 0) ROS_INFO_STREAM("  Random trial number " << r << "...");
+            Assignment rnd = generateRandomAssigs(k);
+
+            // No changes
+            {
+                Assignment cpy = rnd;
+                PlanTree pt(planspace_path); // Force reload tree
+                auto sugg = pss.getMinSuggestions(pt, cpy, 1, false);
+                auto counts = countAdditionsChanges(sugg);
+                // get reward
+                auto maxr_children = pss.getMaxRChildren(pt.getRoot());
+                assert(maxr_children.size() > 0);
+                double maxr = pt.getRoot()->children[maxr_children[0]].reward[pt.getRoot()->children[maxr_children[0]].max_reward_idx];
+                outfile << "PSS, " << k << ", " << maxr << ", " << counts.first << ", " << counts.second << std::endl;
+            }
+
+            // With changes
+            {
+                Assignment cpy = rnd;
+                PlanTree pt(planspace_path);
+                auto sugg = pss.getMinSuggestions(pt, cpy, 1, true, 1);
+                auto counts = countAdditionsChanges(sugg);
+                // get reward
+                auto maxr_children = pss.getMaxRChildren(pt.getRoot());
+                assert(maxr_children.size() > 0);
+                double maxr = pt.getRoot()->children[maxr_children[0]].reward[pt.getRoot()->children[maxr_children[0]].max_reward_idx];
+                outfile << "PSS-CHANGE, " << k << ", " << maxr << ", " << counts.first << ", " << counts.second << std::endl;
+            }
+        }
+    }
+    outfile.close();
+}
+
 void SuggesterNode::restartKB() {
     // Kill KB and wait for restart
     system("rosnode kill /rosplan_knowledge_base &> /dev/null");
@@ -234,19 +272,54 @@ void SuggesterNode::restartKB() {
     ros::Duration(0.5).sleep(); // Just in case...
 }
 
+Assignment SuggesterNode::generateRandomAssigs(int k) {
+    Assignment rnd_assgns;
+    std::set<size_t> used;
+    for (int as = 0; as < k; ++as) {
+        size_t pred = rand()%StateDict::numPredicates();
+        while (used.count(pred) > 0) pred = rand()%StateDict::numPredicates();
+        used.insert(pred);
+        int val = (rand()%(StateDict::numValues(StateDict::getPredName(pred))-1))+1; // -1 to remove the unknown, +1 to move from the 0
+        rnd_assgns.push_back(std::make_pair(pred, val));
+    }
+    return rnd_assgns;
+}
+
+std::pair<int, int> SuggesterNode::countAdditionsChanges(const std::vector<Suggestion> &v) {
+    std::pair<int, int> p(0, 0);
+    for (auto it : v) {
+        p.first += it.nadditions;
+        p.second += it.nchanges;
+    }
+    return p;
+}
+
+
 int main(int argc, char* argv[]) {
     ros::init(argc, argv, "planspace_suggester");
     ros::NodeHandle n;
-    SuggesterNode sn(n);
+
+    bool allow_changes = false;
+    n.getParam("/allow_changes", allow_changes);
+    SuggesterNode sn(n, allow_changes);
 
     // Load data
-    StateDict::loadPredicates("/home/gerard/Desktop/PrefsIROS19/domains/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/jacket_types.txt");
     //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
+    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_types.txt");
 
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
     //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");
     //std::cout << "Tree size: " << pt.size() << std::endl;
 
     // RUN!
-    sn.runExperiments("/home/gerard/Desktop/PrefsIROS19/planspace/shoe_plans.txt", true);
+    std::string planspace_path;
+    if (!n.getParam("/planspace_file", planspace_path)) {
+        ROS_ERROR_STREAM("Parameter /planspace_file not set!");
+        ros::shutdown();
+        exit(1);
+    }
+
+    if (allow_changes) sn.runChangesExperiments(planspace_path);
+    else sn.runAdditionExperiments(planspace_path);
 }

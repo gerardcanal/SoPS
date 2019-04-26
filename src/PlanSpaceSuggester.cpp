@@ -234,7 +234,10 @@ std::vector<Suggestion> PlanSpaceSuggester::getMinSuggestions(PlanTree &pt, Assi
             s = suggestWithChanges(pt, chK, initial, assignment);
             if ((s.nadditions + s.nchanges) == 0) --i; // We have not changed or added anything, so we'll fix that predicate and keep on the process
         }
-        else s = suggestAdditions(pt, assignment);
+        else {
+            s = suggestAdditions(pt, assignment);
+            s.nadditions += s.assignments.size();
+        }
         assignment.insert(assignment.end(), s.assignments.begin(), s.assignments.end());
 
         // Update curr_r

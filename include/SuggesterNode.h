@@ -16,6 +16,7 @@
 #include <fstream>
 #define RESTART_KB_TRIALS 15
 #define N_RANDOM_EXPS 50
+#define N_RANDOM_CHANGE_EXPS 500
 #define N_PLANNER_TRIALS_RDM 20
 #define N_PLANNER_TRIALS_NONRANDOM 50
 
@@ -41,10 +42,13 @@ private:
 
     double planOnce(const Assignment& assignments, bool& found_reward);
     void runExperiment(const Assignment &assignments, const std::string &exp_name, int trials=N_PLANNER_TRIALS_RDM);
+    Assignment generateRandomAssigs(int k);
+    std::pair<int, int> countAdditionsChanges(const std::vector<Suggestion>& v);
 public:
-    SuggesterNode(ros::NodeHandle& nh);
+    SuggesterNode(ros::NodeHandle& nh, bool allow_changes);
     ~SuggesterNode() = default;
-    void runExperiments(const std::string& planspace_path, bool changes=false);
+    void runAdditionExperiments(const std::string &planspace_path, bool changes = false);
+    void runChangesExperiments(const std::string &planspace_path);
 };
 
 

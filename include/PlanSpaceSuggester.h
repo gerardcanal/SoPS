@@ -32,7 +32,6 @@ struct Suggestion {
 
 class PlanSpaceSuggester {
 private:
-    std::vector<size_t> getMaxRChildren(NodePtr n);
     void join(std::vector<DiffResults> &a, std::vector<DiffResults> &b);
 
 public:
@@ -47,6 +46,8 @@ public:
     double computeNodeMetric(size_t c_id, NodePtr n, const std::vector<bState> &v, int strategy = M_SUMDIFFS_NORM);
 
     int sumMat(std::vector<bState> vector);
+    std::vector<size_t> getMaxRChildren(NodePtr n);
+
 };
 
 
