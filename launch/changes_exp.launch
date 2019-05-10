@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/feeding_plans.txt"/>
-	<param name="/experiments_results_file" 	value="/home/gcanal/Dropbox/PrefsIROS19/changes_feeding_results.txt"/>
+	<param name="/planspace_file" 			value="/home/gcanal/Dropbox/PrefsIROS19/planspace/jacket_dressing_plans.txt"/>
+	<param name="/experiments_results_file" 	value="/home/gcanal/Dropbox/PrefsIROS19/changes_jacket_results.txt"/>
     <param name="/allow_changes"                value="true" />
 
 </launch>

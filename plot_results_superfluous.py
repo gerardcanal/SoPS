@@ -4,8 +4,7 @@ import numpy as np # mean, std, var
 import re
 import os
 
-DOMAIN_NAME='jacket'
-NSUGGESTIONS = 8
+NSUGGESTIONS = 10
 SAME_START = False
 
 def split_csv_line(line):
@@ -74,35 +73,29 @@ def prepare_data(data):
     return newdata
 
 
+def plot_one(x, y, label, ax, width=1, color=None, std=True):
+    line2, = ax.plot(x, y, '.-', linewidth=width, label=label, color=color, )
+    if std:
+        ax.fill_between(x, np.add(y, std), np.subtract(y, std), facecolor=line2.get_c(), alpha=0.5)
+
+
 def trim(x, y):
-    while y and y[-1] == -1:
+    while y[-1] == -1:
         y.pop()
     x = x[0:len(y)]
     return x, y
 
-
-def plot_one(x, y, label, ax, width=1, color=None, std=True):
-    #x_idxs = range(len(x))
-    line2, = ax.plot(x, y, '.-', linewidth=width, label=label, color=color, )
-    #plt.xticks(x_idxs, x, rotation=90)
-    if std:
-        #sigma = np.std(y)
-        ax.fill_between(x, np.add(y, std), np.subtract(y, std), facecolor=line2.get_c(), alpha=0.5)
-
-
-def plot(data, plot_path, show=True, std=False, title='Results %s domain' % DOMAIN_NAME):
+def plot(data, plot_path, show=True, std=False, ):
     fig, ax = plt.subplots()
 
-    for k, v in sorted(data.iteritems()):
-        x = v[0]
-        y = v[1]  # mean and std
+    for k, d in data.iteritems():
+        x = d[0]
+        y = d[1]  # mean and std
         x, y = trim(x, y)
-        if not y:
-            continue
-        plot_one(x, y, label=k, ax=ax, std=v[2] if std else False)
+        plot_one(x, y, label=k, ax=ax, std=d[2] if std else False)
 
     # Final
-    plt.title(title)
+    plt.title('PSS with superfluous predicates')
     plt.ylabel('Reward')
     if SAME_START:
         plt.xlabel('Suggestions')
@@ -116,33 +109,11 @@ def plot(data, plot_path, show=True, std=False, title='Results %s domain' % DOMA
 
 
 if __name__ == '__main__':
-    ## Shoe
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt'
-    # #path = '/tmp/shoe_results.txt'
-    # #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
-    # #data = join(data, data2)
-    # #data.update(data2)
-    #
-    # ## Jacket
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt'
-    #
-    # ## feeding
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_feeding_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_jacket_dressing_results_FIRST.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/superfluous_jacket_dressing_results.txt'
-    #path = '/home/gcanal/Dropbox/PrefsIROS19/superfluous_shoe_results.txt'
 
+    data_feeding = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_feeding_results.txt'))
+    data_jacket = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_jacket_dressing_results.txt'))
+    data_shoe = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/superfluous_shoe_results.txt'))
 
-    domains = {'Jacket dressing': '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt',
-               'Shoe fitting': '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt',
-               'Assistive feeding': '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'}
-
-    for DOMAIN_NAME, path in domains.iteritems():
-        data = parse_csv(path)
-        data = prepare_data(data)
-        plot(data, title='%s domain' % DOMAIN_NAME, plot_path=os.getcwd()+"/%s_results.svg" % DOMAIN_NAME.replace(' ', '-').lower())
+    data = {'Shoe fitting': data_shoe['PSS'], 'Jacket dressing': data_jacket['PSS'], 'Feeding': data_feeding['PSS']}
+    plot(data, plot_path=os.getcwd()+"/superflous_results.svg")
     print 'Done'

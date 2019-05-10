@@ -305,8 +305,11 @@ int main(int argc, char* argv[]) {
 
     // Load data
     //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/jacket_types.txt");
-    //StateDict::loadPredicates("/home/gerard/code/catkin_ws/src/iros2019/shoe_types.txt");
-    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/shoe_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/feeding_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/superfluous_feeding_types.txt");
+    StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/superfluous_jacket_types.txt");
+    //StateDict::loadPredicates("/home/gcanal/Dropbox/PrefsIROS19/domains/superfluous_shoe_types.txt");
 
     //PlanTree pt("/home/gcanal/Dropbox/PrefsIROS19/planspace/shoe_plans.txt");
     //PlanTree pt("/home/gerard/code/catkin_ws/src/iros2019/shoe_plans.txt");

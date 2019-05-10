@@ -4,8 +4,8 @@ import numpy as np # mean, std, var
 import re
 import os
 
-DOMAIN_NAME='feeding'
-NSUGGESTIONS = 6
+DOMAIN_NAME='shoe'
+NSUGGESTIONS = 8  # 6 jacket, feeding, 8 shoe
 SAME_START = False
 
 
@@ -36,9 +36,14 @@ def prepare_data(data):
     for k, v in data.iteritems():
         for k1, v1 in v.iteritems():
             for i in xrange(len(v1)):
-                data[k][k1][i] = np.mean(v1[i])
+                data[k][k1][i] = np.mean(v1[i]) if v1[i] else -1
     return data
 
+def trim(x, y):
+    while y and y[-1] == -1:
+        y.pop()
+    x = x[0:len(y)]
+    return x, y
 
 def plot_one(x, y, label, ax, width=1, color=None, std=True):
     #x_idxs = range(len(x))
@@ -49,17 +54,18 @@ def plot_one(x, y, label, ax, width=1, color=None, std=True):
         ax.fill_between(x, np.add(y, std), np.subtract(y, std), facecolor=line2.get_c(), alpha=0.5)
 
 
-def plot(data, plot_path, show=True, std=False, ):
+def plot(data, plot_path, show=True, std=False, title='Results PSS-change %s domain' % DOMAIN_NAME):
     fig, ax = plt.subplots()
 
     plot_key = 'REWARD'
     for k, v in sorted(data.iteritems()):
         x = range(len(v[plot_key]))
         y = v[plot_key]  # mean and std
+        x, y = trim(x, y)
         plot_one(x, y, label=k, ax=ax, std=v[2] if std else False)
 
     # Final
-    plt.title('Results PSS-change %s domain' % DOMAIN_NAME)
+    plt.title(title)
     plt.ylabel('Reward')
     if SAME_START:
         plt.xlabel('Suggestions')
@@ -73,22 +79,13 @@ def plot(data, plot_path, show=True, std=False, ):
 
 
 if __name__ == '__main__':
-    ## Shoe
-    path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
-    path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
-    path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt'
-    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt'
-    #path = '/tmp/shoe_results.txt'
-    #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
-    #data = join(data, data2)
-    #data.update(data2)
+    domains = {'Jacket dressing': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_jacket_results.txt',
+               'Shoe fitting': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_shoe_results.txt',
+               'Assistive feeding': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_feeding_results.txt'}
 
-    ## Jacket
-    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt'
-    path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'
-    path = '/home/gcanal/Dropbox/PrefsIROS19/changes_feeding_results.txt'
-    data = parse_csv(path)
-    data = prepare_data(data)
+    for DOMAIN_NAME, path in domains.iteritems():
+        data = parse_csv(path)
+        data = prepare_data(data)
 
-    plot(data, plot_path=os.getcwd()+"/changes_%s_results.svg" % DOMAIN_NAME)
+        plot(data, title='%s domain allowing changes' % DOMAIN_NAME, plot_path=os.getcwd()+"/changes_%s_results.svg" % DOMAIN_NAME.replace(' ', '-').lower())
     print 'Done'
