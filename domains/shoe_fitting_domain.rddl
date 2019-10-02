@@ -1,0 +1,241 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// A domain for shoe fitting
+//
+// Author: Gerard Canal (gcanal@iri.upc.edu)
+// 
+///////////////////////////////////////////////////////////////////////////////
+
+domain shoe_fitting {
+    
+    types {
+        foot: object;
+        shoe: object;
+
+        // Preference types
+        t_infoprov: {@ip_unknown, @ip_wneeded, @ip_randomly, @ip_always, @ip_never};
+        t_infoobt: { @io_unknown, @io_wuseful, @io_never, @io_wneeded };
+        t_petitions: { @p_unknown, @p_wdanger, @p_always, @p_never };
+        t_threelevel: { @tl_unknown, @low, @med, @high};
+    };
+
+    pvariables {
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // PREFERENCES
+        p_information_providing: { non-fluent, t_infoprov, default = @ip_unknown };
+        p_information_obtaining: { non-fluent, t_infoobt, default = @io_unknown };
+        p_petitions: { non-fluent, t_petitions, default = @p_unknown };
+        p_cogn_visiospatial: { non-fluent, bool, default = false };
+        p_cogn_language: { non-fluent, bool, default = false };
+        p_cogn_memory: { non-fluent, bool, default = false };
+        p_cogn_attention: { non-fluent, bool, default = false };
+        p_cogn_absraction: { non-fluent, bool, default = false };
+        p_cogn_orientation: { non-fluent, bool, default = false };
+        p_motor_head: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_prox_head: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_torso: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_rightarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_rightleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_speed: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_force: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_sb_extraversion: { non-fluent, bool, default = false };
+        p_sb_agreeableness: { non-fluent, bool, default = false };
+        p_sb_conscientiousness: { non-fluent, bool, default = false };
+        p_sb_neuroticism: { non-fluent, bool, default = false };
+        p_sb_openness: { non-fluent, bool, default = false };
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Non-fluents
+        CORRECT_SHOE(shoe, foot): { non-fluent, bool, default=false };
+        GOAL_REWARD: { non-fluent, real, default=50 };
+        RIGHT_FOOT(foot): { non-fluent, bool, default=false };
+        LEFT_FOOT(foot): { non-fluent, bool, default=false };
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // State fluents
+        shoe_grasped(shoe): { state-fluent, bool, default=false };
+        shoe_fitted(shoe, foot): { state-fluent, bool, default=false };
+        close_to_foot(foot): { state-fluent, bool, default=false };
+        foot_reachable(foot): { state-fluent, bool, default=false }; // Either ask or inform -> Means foot is lifted
+        foot_visible(foot): { state-fluent, bool, default=false }; // Either ask or inform
+        interacted: { state-fluent, bool, default=false }; // Either ask or inform
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Action fluents
+
+        //Grasp
+        graspShoe(shoe, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+
+        //Approach
+        approachTop(foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachLeft(foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachRight(foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachCenter(foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachBottom(foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+
+        //Insert
+        insertStraight(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // Just inserting wihtout moving the foot  // MP
+        insertCurved(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // Moving the foot to do a better insert // MP
+        insertRight(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // Foot not straight // MP
+        insertLeft(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // Foot not straight // MP
+
+        //Release
+        releaseSimple(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // open gripper and leave // MP
+        releasePush(shoe, foot, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // Push before releasing to do a better fit // MP
+
+        //Interaction
+        inform: { action-fluent, bool, default=false };  // IP
+        requestReachable(foot): { action-fluent, bool, default=false };  // IP
+        requestVisible(foot): { action-fluent, bool, default=false };  // IP
+
+        // Goal simulation
+        goal: { action-fluent, bool, default=false };
+        goal_reached: { state-fluent, bool, default=false };
+
+
+        // Fluents to force that actions are different and selectable
+        sf_graspShoe(shoe, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachTop(foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachLeft(foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachRight(foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false };// State-fluent to force different action effect for each action and avoid prunning
+        sf_approachCenter(foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false };// State-fluent to force different action effect for each action and avoid prunning
+        sf_approachBottom(foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertStraight(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertCurved(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertRight(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertLeft(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_releaseSimple(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_releasePush(shoe, foot, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+    };
+    cpfs {
+        shoe_grasped'(?s) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [graspShoe(?s, ?speed, ?force)]) then true 
+                            else if (exists_{?f:foot, ?speed: t_threelevel, ?force: t_threelevel} [releaseSimple(?s, ?f, ?speed, ?force) | releasePush(?s, ?f, ?speed, ?force)]) then false 
+                            else shoe_grasped(?s);
+        
+        shoe_fitted'(?s, ?f) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) | insertCurved(?s, ?f, ?speed, ?force) | insertLeft(?s, ?f, ?speed, ?force) | insertRight(?s, ?f, ?speed, ?force)]) then true
+                               else shoe_fitted(?s, ?f);
+        
+        close_to_foot'(?f) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) | approachLeft(?f, ?speed, ?force) | approachRight(?f, ?speed, ?force) | approachCenter(?f, ?speed, ?force) | approachBottom(?f, ?speed, ?force)]) then true
+                             else if (exists_{?s:shoe, ?speed: t_threelevel, ?force: t_threelevel} [releaseSimple(?s, ?f, ?speed, ?force) | releasePush(?s, ?f, ?speed, ?force)]) then false
+                             else close_to_foot(?f);
+
+        foot_reachable'(?f) = if (requestReachable(?f)) then true
+                              //else if (exists_{?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [graspShoe(?s, ?speed, ?force)]) then false
+                              else foot_reachable(?f);
+        
+        foot_visible'(?f) = if (requestVisible(?f)) then true else foot_visible(?f);
+
+        interacted' = if (inform | exists_{?fr: foot} [requestReachable(?fr)] | exists_{?fv: foot} [requestVisible(?fv)]) then true
+                      else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) | approachLeft(?f, ?speed, ?force) | approachRight(?f, ?speed, ?force) | approachCenter(?f, ?speed, ?force) | approachBottom(?f, ?speed, ?force)]) then false
+                      else if (exists_{?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [graspShoe(?s, ?speed, ?force)]) then false
+                      else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) | insertCurved(?s, ?f, ?speed, ?force) | insertRight(?s, ?f, ?speed, ?force) | insertLeft(?s, ?f, ?speed, ?force) | releaseSimple(?s, ?f, ?speed, ?force) | releasePush(?s, ?f, ?speed, ?force)]) then false
+                      else interacted;
+
+        goal_reached' = if (goal) then true else goal_reached;
+
+        // Workaround fluents
+        sf_graspShoe'(?s, ?speed, ?force) = graspShoe(?s, ?speed, ?force);
+        sf_approachTop'(?f, ?speed, ?force) = approachTop(?f, ?speed, ?force);
+        sf_approachLeft'(?f, ?speed, ?force) = approachLeft(?f, ?speed, ?force);
+        sf_approachRight'(?f, ?speed, ?force) = approachRight(?f, ?speed, ?force);
+        sf_approachCenter'(?f, ?speed, ?force) = approachCenter(?f, ?speed, ?force);
+        sf_approachBottom'(?f, ?speed, ?force) = approachBottom(?f, ?speed, ?force);
+        sf_insertStraight'(?s, ?f, ?speed, ?force) = insertStraight(?s, ?f, ?speed, ?force);
+        sf_insertCurved'(?s, ?f, ?speed, ?force) = insertCurved(?s, ?f, ?speed, ?force);
+        sf_insertRight'(?s, ?f, ?speed, ?force) = insertRight(?s, ?f, ?speed, ?force);
+        sf_insertLeft'(?s, ?f, ?speed, ?force) = insertLeft(?s, ?f, ?speed, ?force);
+        sf_releaseSimple'(?s, ?f, ?speed, ?force) = releaseSimple(?s, ?f, ?speed, ?force);
+        sf_releasePush'(?s, ?f, ?speed, ?force) = releasePush(?s, ?f, ?speed, ?force);
+    };
+
+
+    action-preconditions {
+        // Can't have any shoe to grasp one
+        forall_{?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [graspShoe(?s, ?speed, ?force) => (~goal_reached ^ forall_{?s1: shoe} [~shoe_grasped(?s1) ^ ~exists_{?f:foot} [shoe_fitted(?s, ?f)]])];
+
+        // I need to be able to reach the foot to approach
+        forall_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) => (~goal_reached ^ foot_reachable(?f) ^ ~close_to_foot(?f) ^ exists_{?s: shoe} [shoe_grasped(?s) ^  CORRECT_SHOE(?s, ?f)])];
+        forall_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachLeft(?f, ?speed, ?force) => (~goal_reached ^ foot_reachable(?f) ^ ~close_to_foot(?f) ^ exists_{?s: shoe} [shoe_grasped(?s) ^  CORRECT_SHOE(?s, ?f)])];
+        forall_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachRight(?f, ?speed, ?force) => (~goal_reached ^ foot_reachable(?f) ^ ~close_to_foot(?f) ^ exists_{?s: shoe} [shoe_grasped(?s) ^  CORRECT_SHOE(?s, ?f)])];
+        forall_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachCenter(?f, ?speed, ?force) => (~goal_reached ^ foot_reachable(?f) ^ ~close_to_foot(?f) ^ exists_{?s: shoe} [shoe_grasped(?s) ^  CORRECT_SHOE(?s, ?f)])];
+        forall_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachBottom(?f, ?speed, ?force) => (~goal_reached ^ foot_reachable(?f) ^ ~close_to_foot(?f) ^ exists_{?s: shoe} [shoe_grasped(?s) ^  CORRECT_SHOE(?s, ?f)])];
+
+        //Insert Shoe
+        forall_{?f: foot, ?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) => (~goal_reached ^ close_to_foot(?f) ^ foot_reachable(?f) ^ ~shoe_fitted(?s, ?f) ^ shoe_grasped(?s) ^ CORRECT_SHOE(?s, ?f))];
+        forall_{?f: foot, ?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [insertCurved(?s, ?f, ?speed, ?force) => (~goal_reached ^ close_to_foot(?f) ^ foot_reachable(?f) ^ ~shoe_fitted(?s, ?f) ^ shoe_grasped(?s) ^ CORRECT_SHOE(?s, ?f))];
+        forall_{?f: foot, ?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [insertRight(?s, ?f, ?speed, ?force) => (~goal_reached ^ close_to_foot(?f) ^ foot_reachable(?f) ^ ~shoe_fitted(?s, ?f) ^ shoe_grasped(?s) ^ CORRECT_SHOE(?s, ?f))];
+        forall_{?f: foot, ?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [insertLeft(?s, ?f, ?speed, ?force) => (~goal_reached ^ close_to_foot(?f) ^ foot_reachable(?f) ^ ~shoe_fitted(?s, ?f) ^ shoe_grasped(?s) ^ CORRECT_SHOE(?s, ?f))];
+
+        //Release
+        forall_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releaseSimple(?s, ?f, ?speed, ?force) => (~goal_reached ^ shoe_grasped(?s) ^ shoe_fitted(?s, ?f) ^ foot_reachable(?f))];
+        forall_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releasePush(?s, ?f, ?speed, ?force) => (~goal_reached ^ shoe_grasped(?s) ^ shoe_fitted(?s, ?f) ^ foot_reachable(?f))];
+        
+        //Interaction
+        inform => (~goal_reached ^ ~interacted);
+        forall_{?f: foot} [requestReachable(?f) => (~goal_reached ^ ~interacted ^ ~foot_reachable(?f) ^ foot_visible(?f))];
+        forall_{?f: foot} [requestVisible(?f) => (~goal_reached ^ ~interacted ^ ~foot_visible(?f))];
+
+        // Goal
+        goal => (~goal_reached ^ forall_{?f: foot} [exists_{?s: shoe} [shoe_fitted(?s, ?f) ^ ~shoe_grasped(?s)]]);
+    };
+
+    state-invariants {
+        // Foot reachable means foot is visible
+        forall_{?f: foot} [foot_reachable(?f) => foot_visible(?f)] ^ ((sum_{?f1: foot} [foot_reachable(?f1)]) <= 1);
+
+        // Can't have more than one foot lifted at the same time
+    };
+
+    reward = if (~goal_reached ^ goal) then GOAL_REWARD
+             else if (goal_reached) then 0
+             else if (~exists_{?f: foot, ?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) | approachLeft(?f, ?speed, ?force) | approachRight(?f, ?speed, ?force) | approachCenter(?f, ?speed, ?force) | approachBottom(?f, ?speed, ?force) | graspShoe(?s, ?speed, ?force) | insertStraight(?s, ?f, ?speed, ?force) | insertCurved(?s, ?f, ?speed, ?force) | insertRight(?s, ?f, ?speed, ?force) | insertLeft(?s, ?f, ?speed, ?force) | releaseSimple(?s, ?f, ?speed, ?force) | releasePush(?s, ?f, ?speed, ?force) | inform | requestReachable(?f) | requestVisible(?f)]) then -50
+             else if (inform ^ (p_information_providing == @ip_always)) then 15
+             else if (exists_{?f: foot} [requestReachable(?f) ^ (p_petitions == @p_always)]) then 15
+             else if (exists_{?f: foot} [requestVisible(?f) ^ (p_petitions == @p_always)]) then 15
+             else if (exists_{?s: shoe, ?speed: t_threelevel, ?force: t_threelevel} [graspShoe(?s, ?speed, ?force) ^ ((?speed == p_speed) | (p_speed == @tl_unknown))]) then 10
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) ^ ((?speed == @low ^ p_speed == ?speed) |  (LEFT_FOOT(?f)  ^ p_motor_leftleg == @low))]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) ^ ((?speed == @low ^ p_speed == ?speed) |  (RIGHT_FOOT(?f) ^ p_motor_rightleg == @low))]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachTop(?f, ?speed, ?force) ^ (?speed ~= p_speed)]) then -3
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachLeft(?f, ?speed, ?force) ^ ((?speed == p_speed) ^ LEFT_FOOT(?f) ^ p_motor_leftfoot == @low ^ p_motor_leftleg == @med)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachLeft(?f, ?speed, ?force) ^ (?speed ~= p_speed)]) then -3
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachRight(?f, ?speed, ?force) ^ ((?speed == p_speed) ^ RIGHT_FOOT(?f) ^ p_motor_rightfoot == @low ^ p_motor_rightleg == @med)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachRight(?f, ?speed, ?force) ^ (?speed ~= p_speed)]) then -3
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachBottom(?f, ?speed, ?force) ^ ((?speed == p_speed ^ ?speed ~= @high) ^ RIGHT_FOOT(?f) ^ p_motor_rightleg == @high)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachBottom(?f, ?speed, ?force) ^ ((?speed == p_speed ^ ?speed ~= @high) ^ LEFT_FOOT(?f) ^ p_motor_leftleg == @high)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachBottom(?f, ?speed, ?force) ^ (?speed ~= p_speed)]) then -3
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachCenter(?f, ?speed, ?force) ^ ((?speed == p_speed) ^ RIGHT_FOOT(?f) ^ p_motor_rightleg == @med)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachCenter(?f, ?speed, ?force) ^ ((?speed == p_speed) ^ LEFT_FOOT(?f) ^ p_motor_leftleg == @med)]) then 5
+             else if (exists_{?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [approachCenter(?f, ?speed, ?force) ^ (?speed ~= p_speed)]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) ^ ((?speed == p_speed) ^ RIGHT_FOOT(?f) ^ ((p_motor_rightfoot == @low) | (p_force == @low) ^ (?force == p_force)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) ^ ((?speed == p_speed) ^  LEFT_FOOT(?f) ^ ((p_motor_leftfoot == @low)  | (p_force == @low) ^ (?force == p_force)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertStraight(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertCurved(?s, ?f, ?speed, ?force) ^ (RIGHT_FOOT(?f) ^ ((p_motor_rightfoot == @high) ^ ((p_force ~= @low) ^ (?force == p_force)) ^ (?speed == p_speed ^ ?speed ~= @high)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertCurved(?s, ?f, ?speed, ?force) ^ (LEFT_FOOT(?f) ^ ((p_motor_leftfoot == @high)  ^ ((p_force ~= @low) ^ (?force == p_force)) ^ (?speed == p_speed ^ ?speed ~= @high)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertCurved(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertRight(?s, ?f, ?speed, ?force) ^ (RIGHT_FOOT(?f) ^ p_motor_rightfoot == @low ^ p_speed ~= @high ^ (?speed == p_speed))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertRight(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertLeft(?s, ?f, ?speed, ?force) ^ (LEFT_FOOT(?f) ^ p_motor_leftfoot == @low  ^ p_speed ~= @high ^ (?speed == p_speed))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [insertLeft(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releaseSimple(?s, ?f, ?speed, ?force) ^ ((?speed == p_speed) ^ (((?force == @low) ^ (?force == p_force)) | (p_motor_rightfoot == @low | p_motor_leftfoot == @low)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releaseSimple(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releasePush(?s, ?f, ?speed, ?force) ^ ((?speed == p_speed) ^ (p_force == ?force) ^ (?force == @med | ?force == @high) ^ (RIGHT_FOOT(?f) ^ (p_motor_rightfoot == @med | p_motor_rightfoot == @high)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releasePush(?s, ?f, ?speed, ?force) ^ ((?speed == p_speed) ^ (p_force == ?force) ^ (?force == @med | ?force == @high) ^ (LEFT_FOOT(?f) ^ (p_motor_leftfoot == @med | p_motor_leftfoot == @high)))]) then 5
+             else if (exists_{?s: shoe, ?f: foot, ?speed: t_threelevel, ?force: t_threelevel} [releasePush(?s, ?f, ?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -3
+             else if (inform ^ (p_information_providing == @ip_randomly)) then 0
+             else if (inform ^ (p_information_providing == @ip_never)) then -3
+             else if (inform ^ ((p_force == @high | p_speed == @high) ^ p_information_providing == @ip_wneeded)) then -3
+             else if (exists_{?f: foot} [requestReachable(?f) ^ (p_petitions == @p_never)]) then -15
+             else if (exists_{?f: foot} [requestReachable(?f) ^ ((p_force == @high | p_speed == @high) ^ p_petitions == @p_wdanger)]) then 0
+             else if (exists_{?f: foot} [requestVisible(?f) ^ (p_petitions == @p_never)]) then -15
+             else if (exists_{?f: foot} [requestVisible(?f) ^ ((p_force == @high | p_speed == @high) ^ p_petitions == @p_wdanger)]) then 0
+             else -1;
+}

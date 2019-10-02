@@ -1,0 +1,68 @@
+approachArmFrontal, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+approachArmFrontal, (p_prox_torso == @high), -10
+approachArmFrontal, RIGHT_ARM(?a) ^ (p_motor_rightarm == @low), 20
+approachArmFrontal, LEFT_ARM(?a) ^ (p_motor_leftarm == @low), 20
+
+approachArmRear, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+approachArmRear, RIGHT_ARM(?a) ^ (p_motor_rightarm == @low), -5
+approachArmRear, LEFT_ARM(?a) ^ (p_motor_leftarm == @low), -5
+approachArmRear, RIGHT_ARM(?a) ^ (p_motor_rightarm == @high), 15
+approachArmRear, LEFT_ARM(?a) ^ (p_motor_leftarm == @high), 15
+
+approachArmSide, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+approachArmSide, RIGHT_ARM(?a) ^ (p_motor_rightarm == @med) | ((p_motor_rightarm == @low) ^ (p_motor_leftarm == @low)), 10
+approachArmSide, LEFT_ARM(?a)  ^ (p_motor_leftarm == @med)  | ((p_motor_rightarm == @low) ^ (p_motor_leftarm == @low)), 10
+
+approachBothArms, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+approachBothArms, (p_motor_rightarm == @low) | (p_motor_leftarm == @low), -10
+approachBothArms, (p_motor_rightarm == @high) ^ (p_motor_leftarm == @high), 15
+
+insertSleeveFoldedFwd, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+insertSleeveFoldedFwd, (p_prox_torso == @high), -5
+insertSleeveFoldedFwd, RIGHT_ARM(?a) ^ (p_motor_rightarm == @low), 15
+insertSleeveFoldedFwd, LEFT_ARM(?a)  ^ (p_motor_leftarm == @low), 15
+
+insertSleeveStraight, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+insertSleeveStraight, RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)), 10
+insertSleeveStraight, LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)), 10
+
+insertBothSleeves, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+insertBothSleeves, (p_motor_rightarm == @low) | (p_motor_leftarm == @low), -10
+insertBothSleeves, (p_motor_rightarm == @high) ^ (p_motor_leftarm == @high), 15
+
+dragForearmFoldedFwd, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+dragForearmFoldedFwd, (p_prox_torso == @high), -3
+dragForearmFoldedFwd, RIGHT_ARM(?a) ^ (p_motor_rightarm == @low), 15
+dragForearmFoldedFwd, LEFT_ARM(?a)  ^ (p_motor_leftarm == @low), 15
+dragForearmFoldedFwd, (?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)), 10
+
+dragForearmStraight, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+dragForearmStraight, (?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)), 10
+dragForearmStraight, RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)), 10
+dragForearmStraight, LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)), 10
+
+dragBothForearms, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+dragBothForearms, (?force == @low) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low)), 10
+dragBothForearms, (p_motor_rightarm == @high) ^ (p_motor_leftarm == @high), 15
+
+dragUpperarm, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+dragUpperarm, (?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)), 10
+dragUpperarm, RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)), 10
+dragUpperarm, LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)), 10
+
+dragBothUpperarms, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+dragBothUpperarms, (?force == @low) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low)), 10
+
+
+inform, p_information_providing == @ip_always, 15
+inform, p_information_providing == @ip_randomly, 0
+inform, p_information_providing == @ip_never, -3
+inform, (p_force == @high | p_speed == @high) ^ p_information_providing == @ip_wneeded, 5
+
+-------------
+p_motor_rightarm
+p_motor_leftarm
+p_speed
+p_force
+p_information_providing
+p_prox_torso -> high means i need a lot of space (want the robot far), low means i can stand the robot near

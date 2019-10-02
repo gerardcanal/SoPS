@@ -1,0 +1,27 @@
+non-fluents feeding_nf {
+    domain = feeding;
+    objects {
+        type: {t}; // To aoid an rddlsim parsing error...
+    };
+    non-fluents {
+         //MAX_SPOONFULS=1;
+         GOAL_REWARD = 50;
+         //p_motor_head = @low;
+         //p_prox_head = @high;
+         //p_pers_cadence = @high;
+         //p_information_providing = @ip_never;
+         //p_speed = @med;
+         //p_force = @low;
+    };
+}
+
+instance feeding__instance {
+    domain = feeding;
+    non-fluents = feeding_nf;
+    
+    //init-state {};
+
+    max-nondef-actions = 1;
+    horizon  = 10;
+    discount = 1.0;
+}

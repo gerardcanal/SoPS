@@ -1,0 +1,11 @@
+TYPES
+t_infoprov: @ip_unknown, @ip_wneeded, @ip_randomly, @ip_always, @ip_never
+t_threelevel: @tl_unknown, @low, @med, @high
+
+PREDICATES
+p_motor_head: t_threelevel
+p_speed: t_threelevel
+p_force: t_threelevel
+p_information_providing: t_infoprov
+p_prox_head: t_threelevel
+p_pers_cadence: t_threelevel

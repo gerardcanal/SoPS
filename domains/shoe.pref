@@ -1,0 +1,68 @@
+inform, p_information_providing == @ip_always, 15
+
+requestReachable, p_petitions == @p_always, 15
+
+requestVisible, p_petitions == @p_always, 15
+
+
+graspShoe, (?speed == p_speed) | (p_speed == @tl_unknown), 10
+
+approachTop, (?speed == @low ^ p_speed == ?speed) |  (LEFT_FOOT(?f)  ^ p_motor_leftleg == @low), 5
+approachTop, (?speed == @low ^ p_speed == ?speed) |  (RIGHT_FOOT(?f) ^ p_motor_rightleg == @low), 5
+approachTop, ?speed ~= p_speed, -3
+
+approachLeft, (?speed == p_speed) ^ LEFT_FOOT(?f) ^ p_motor_leftfoot == @low ^ p_motor_leftleg == @med, 5
+approachLeft, ?speed ~= p_speed, -3
+
+approachRight, (?speed == p_speed) ^ RIGHT_FOOT(?f) ^ p_motor_rightfoot == @low ^ p_motor_rightleg == @med, 5
+approachRight, ?speed ~= p_speed, -3
+
+approachBottom, (?speed == p_speed ^ ?speed ~= @high) ^ RIGHT_FOOT(?f) ^ p_motor_rightleg == @high, 5
+approachBottom, (?speed == p_speed ^ ?speed ~= @high) ^ LEFT_FOOT(?f) ^ p_motor_leftleg == @high, 5
+approachBottom, ?speed ~= p_speed, -3
+
+approachCenter, (?speed == p_speed) ^ RIGHT_FOOT(?f) ^ p_motor_rightleg == @med, 5
+approachCenter, (?speed == p_speed) ^ LEFT_FOOT(?f) ^ p_motor_leftleg == @med, 5
+approachCenter, ?speed ~= p_speed, -3
+
+insertStraight, (?speed == p_speed) ^ RIGHT_FOOT(?f) ^ ((p_motor_rightfoot == @low) | (p_force == @low) ^ (?force == p_force)), 5
+insertStraight, (?speed == p_speed) ^  LEFT_FOOT(?f) ^ ((p_motor_leftfoot == @low)  | (p_force == @low) ^ (?force == p_force)), 5 
+insertStraight, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+insertCurved, RIGHT_FOOT(?f) ^ ((p_motor_rightfoot == @high) ^ ((p_force ~= @low) ^ (?force == p_force)) ^ (?speed == p_speed ^ ?speed ~= @high)), 5
+insertCurved,  LEFT_FOOT(?f) ^ ((p_motor_leftfoot == @high)  ^ ((p_force ~= @low) ^ (?force == p_force)) ^ (?speed == p_speed ^ ?speed ~= @high)), 5
+insertCurved,  ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+insertRight, RIGHT_FOOT(?f) ^ p_motor_rightfoot == @low ^ p_speed ~= @high ^ (?speed == p_speed), 5
+insertRight, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+insertLeft,   LEFT_FOOT(?f) ^ p_motor_leftfoot == @low  ^ p_speed ~= @high ^ (?speed == p_speed), 5
+insertLeft,   ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+releaseSimple, (?speed == p_speed) ^ (((?force == @low) ^ (?force == p_force)) | (p_motor_rightfoot == @low | p_motor_leftfoot == @low)), 5
+releaseSimple, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+releasePush, (?speed == p_speed) ^ (p_force == ?force) ^ (?force == @med | ?force == @high) ^ (RIGHT_FOOT(?f) ^ (p_motor_rightfoot == @med | p_motor_rightfoot == @high)), 5
+releasePush, (?speed == p_speed) ^ (p_force == ?force) ^ (?force == @med | ?force == @high) ^ (LEFT_FOOT(?f) ^ (p_motor_leftfoot == @med | p_motor_leftfoot == @high)), 5
+releasePush, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -3
+
+
+inform, p_information_providing == @ip_randomly, 0
+inform, p_information_providing == @ip_never, -3
+inform, (p_force == @high | p_speed == @high) ^ p_information_providing == @ip_wneeded, -3
+
+requestReachable, p_petitions == @p_never, -15
+requestReachable, (p_force == @high | p_speed == @high) ^ p_petitions == @p_wdanger, 0
+
+requestVisible, p_petitions == @p_never, -15
+requestVisible, (p_force == @high | p_speed == @high) ^ p_petitions == @p_wdanger, 0 
+
+-----------------
+p_motor_rightleg
+p_motor_leftleg
+p_motor_rightfoot
+p_motor_leftfoot
+p_speed
+p_force
+p_information_providing
+p_petitions

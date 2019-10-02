@@ -1,0 +1,267 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// A domain for jacket dressing
+//
+// Author: Gerard Canal (gcanal@iri.upc.edu)
+// 
+///////////////////////////////////////////////////////////////////////////////
+
+domain jacket_dressing {
+    
+    types {
+        arm: object;
+
+        // Preference types
+        t_infoprov: {@ip_unknown, @ip_wneeded, @ip_randomly, @ip_always, @ip_never};
+        t_infoobt: { @io_unknown, @io_wuseful, @io_never, @io_wneeded };
+        t_petitions: { @p_unknown, @p_wdanger, @p_always, @p_never };
+        t_threelevel: { @tl_unknown, @low, @med, @high};
+    };
+
+    pvariables {
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // PREFERENCES
+        p_information_providing: { non-fluent, t_infoprov, default = @ip_unknown };
+        p_information_obtaining: { non-fluent, t_infoobt, default = @io_unknown };
+        p_petitions: { non-fluent, t_petitions, default = @p_unknown };
+        p_cogn_visiospatial: { non-fluent, bool, default = false };
+        p_cogn_language: { non-fluent, bool, default = false };
+        p_cogn_memory: { non-fluent, bool, default = false };
+        p_cogn_attention: { non-fluent, bool, default = false };
+        p_cogn_absraction: { non-fluent, bool, default = false };
+        p_cogn_orientation: { non-fluent, bool, default = false };
+        p_motor_head: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_prox_head: { non-fluent, t_threelevel, default = @tl_unknown }; // Distance in cm
+        p_prox_torso: { non-fluent, t_threelevel, default = @tl_unknown }; // Distance in cm
+        p_prox_rightarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_rightleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_speed: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_force: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_sb_extraversion: { non-fluent, bool, default = false };
+        p_sb_agreeableness: { non-fluent, bool, default = false };
+        p_sb_conscientiousness: { non-fluent, bool, default = false };
+        p_sb_neuroticism: { non-fluent, bool, default = false };
+        p_sb_openness: { non-fluent, bool, default = false };
+        p_pers_cadence: { non-fluent, t_threelevel, default = @tl_unknown };
+ 
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Non-fluents
+        GOAL_REWARD: { non-fluent, real, default=50 };
+        RIGHT_ARM(arm): { non-fluent, bool, default=false };
+        LEFT_ARM(arm): { non-fluent, bool, default=false };
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // State fluents
+        garment_grasped: { state-fluent, bool, default=true }; // Assume start with grasped 
+        fitted_forearm(arm): { state-fluent, bool, default=false };
+        fitted_upperarm(arm): { state-fluent, bool, default=false };
+        inserted_hand(arm): { state-fluent, bool, default=false };
+        close_to_hand(arm): { state-fluent, bool, default=false };
+        hand_visible(arm): { state-fluent, bool, default=false };
+        hand_reachable(arm): { state-fluent, bool, default=false };        
+        interacted: { state-fluent, bool, default=false }; // Either ask or inform
+
+        forward_arm(arm): { state-fluent, bool, default=false };  // Determines whether we started a forward approahc or not
+        approached(arm): { state-fluent, bool, default=false };  // Whether we just approched. To avoid approaching two arms independently
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Action fluents
+        // Approach jacket to person's hand
+        approachArmFrontal(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachArmRear(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachArmSide(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachBothArms(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Insert a sleeve through the hand
+        insertSleeveStraight(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        insertSleeveFoldedFwd(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        insertBothSleeves(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Drag forearm
+        dragForearmStraight(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        dragForearmFoldedFwd(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        dragBothForearms(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Drag upper arm
+        dragUpperarm(arm, t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        dragBothUpperarms(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Drag over shoulder and release
+        finish: { action-fluent, bool, default=false };
+
+        // Interaction
+        inform: { action-fluent, bool, default=false };  // IP
+        requestReachable(arm): { action-fluent, bool, default=false };  // IP
+        requestVisible(arm): { action-fluent, bool, default=false };  // IP
+
+        // Goal simulation
+        goal: { action-fluent, bool, default=false };
+        goal_reached: { state-fluent, bool, default=false };
+
+        // Fluents to force that actions are different and selectable
+        sf_approachArmFrontal(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachArmRear(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachArmSide(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachBothArms(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertSleeveStraight(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertSleeveFoldedFwd(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_insertBothSleeves(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_dragForearmStraight(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_dragForearmFoldedFwd(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_dragBothForearms(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_dragUpperarm(arm, t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_dragBothUpperarms(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+    };
+
+    cpfs {
+        garment_grasped' = if (finish) then false else garment_grasped;
+        
+        close_to_hand'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) | approachArmRear(?a, ?speed, ?force) | approachArmSide(?a, ?speed, ?force) | approachBothArms(?speed, ?force)]) then true 
+                             else if (exists_{?a1: arm, ?speed: t_threelevel, ?force: t_threelevel} [(?a ~= ?a1) ^ (approachArmFrontal(?a1, ?speed, ?force) | approachArmRear(?a1, ?speed, ?force) | approachArmSide(?a1, ?speed, ?force))]) then false
+                             else close_to_hand(?a);
+
+        inserted_hand'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) | insertSleeveFoldedFwd(?a, ?speed, ?force) | insertBothSleeves(?speed, ?force)]) then true
+                             else inserted_hand(?a);
+
+        fitted_forearm'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) | dragForearmFoldedFwd(?a, ?speed, ?force) | dragBothForearms(?speed, ?force)]) then true
+                              else fitted_forearm(?a);
+
+        fitted_upperarm'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) | dragBothUpperarms(?speed, ?force)]) then true
+                               else fitted_upperarm(?a);
+
+        hand_visible'(?a) = if (requestVisible(?a)) then true 
+                            else hand_visible(?a);
+
+        hand_reachable'(?a) = if (requestReachable(?a)) then true 
+                              else hand_reachable(?a);
+
+        interacted' = if (inform | exists_{?a: arm} [requestReachable(?a) | requestVisible(?a)]) then true
+                      else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) | approachArmRear(?a, ?speed, ?force) | approachArmSide(?a, ?speed, ?force) | insertSleeveStraight(?a, ?speed, ?force) | insertSleeveFoldedFwd(?a, ?speed, ?force) | dragForearmStraight(?a, ?speed, ?force) | dragForearmFoldedFwd(?a, ?speed, ?force) | dragUpperarm(?a, ?speed, ?force) | approachBothArms(?speed, ?force) | insertBothSleeves(?speed, ?force) | dragBothForearms(?speed, ?force) | dragBothUpperarms(?speed, ?force) | finish]) then false
+                      else interacted;
+
+        goal_reached' = if (goal) then true
+                        else goal_reached;
+
+        forward_arm'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force)]) then true
+                           else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) | approachArmSide(?a, ?speed, ?force) | approachBothArms(?speed, ?force)]) then false
+                           else forward_arm(?a);
+
+        approached'(?a) = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) | approachArmRear(?a, ?speed, ?force) | approachArmSide(?a, ?speed, ?force) | approachBothArms(?speed, ?force)]) then true 
+                          else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) | insertSleeveFoldedFwd(?a, ?speed, ?force) | insertBothSleeves(?speed, ?force)]) then false
+                          else approached(?a);
+
+
+        // Workaround fluents
+        sf_approachArmFrontal'(?a, ?speed, ?force) = approachArmFrontal(?a, ?speed, ?force);
+        sf_approachArmRear'(?a, ?speed, ?force) = approachArmRear(?a, ?speed, ?force);
+        sf_approachArmSide'(?a, ?speed, ?force) = approachArmSide(?a, ?speed, ?force);
+        sf_approachBothArms'(?speed, ?force) = approachBothArms(?speed, ?force);
+        sf_insertSleeveStraight'(?a, ?speed, ?force) = insertSleeveStraight(?a, ?speed, ?force);
+        sf_insertSleeveFoldedFwd'(?a, ?speed, ?force) = insertSleeveFoldedFwd(?a, ?speed, ?force);
+        sf_insertBothSleeves'(?speed, ?force) = insertBothSleeves(?speed, ?force);
+        sf_dragForearmStraight'(?a, ?speed, ?force) = dragForearmStraight(?a, ?speed, ?force);
+        sf_dragForearmFoldedFwd'(?a, ?speed, ?force) = dragForearmFoldedFwd(?a, ?speed, ?force);
+        sf_dragBothForearms'(?speed, ?force) = dragBothForearms(?speed, ?force);
+        sf_dragUpperarm'(?a, ?speed, ?force) = dragUpperarm(?a, ?speed, ?force);
+        sf_dragBothUpperarms'(?speed, ?force) = dragBothUpperarms(?speed, ?force);
+    };
+
+    action-preconditions {
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) => (garment_grasped ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~close_to_hand(?a) ^ ~exists_{?a1: arm} [inserted_hand(?a1) | approached(?a1)])];
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) => (garment_grasped ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~close_to_hand(?a) ^ ~exists_{?a1: arm} [approached(?a1)])];
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmSide(?a, ?speed, ?force) => (garment_grasped ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~close_to_hand(?a) ^ ~exists_{?a1: arm} [approached(?a1) | fitted_forearm(?a1)])];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [approachBothArms(?speed, ?force) => (garment_grasped ^ forall_{?a: arm} [hand_reachable(?a) ^ hand_visible(?a) ^ ~close_to_hand(?a) ^ ~approached(?a)])];
+        
+
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) => (garment_grasped ^ close_to_hand(?a) ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~inserted_hand(?a))];
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveFoldedFwd(?a, ?speed, ?force) => (forward_arm(?a) ^ garment_grasped ^ close_to_hand(?a) ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~inserted_hand(?a) ^ ~exists_{?a1: arm} [inserted_hand(?a1)])];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [insertBothSleeves(?speed, ?force) => (garment_grasped ^ forall_{?a: arm} [close_to_hand(?a) ^ hand_reachable(?a) ^ hand_visible(?a) ^ ~inserted_hand(?a)])];
+        
+
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) => (inserted_hand(?a) ^ garment_grasped ^ ~fitted_forearm(?a))];
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) => (forward_arm(?a) ^ inserted_hand(?a) ^ garment_grasped ^ ~fitted_forearm(?a) ^ ~exists_{?a1: arm} [(?a1 ~= ?a) ^ inserted_hand(?a1)])];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [dragBothForearms(?speed, ?force) => (forall_{?a: arm} [inserted_hand(?a) ^ ~fitted_forearm(?a)] ^ garment_grasped)];
+        
+        forall_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) => (fitted_forearm(?a) ^ garment_grasped ^ ~fitted_upperarm(?a))];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [dragBothUpperarms(?speed, ?force) => (forall_{?a: arm} [fitted_forearm(?a) ^ ~fitted_upperarm(?a)] ^ garment_grasped)];
+        
+
+        finish => (forall_{?a: arm} [fitted_upperarm(?a)] ^ garment_grasped);
+
+
+        //Interaction
+        inform => (~goal_reached ^ ~interacted);
+        forall_{?a: arm} [requestReachable(?a) => (~goal_reached ^ ~interacted ^ ~hand_reachable(?a) ^ hand_visible(?a))];
+        forall_{?a: arm} [requestVisible(?a) => (~goal_reached ^ ~interacted ^ ~hand_reachable(?a))];
+
+        // Goal
+        goal => (~goal_reached ^ forall_{?a: arm} [fitted_forearm(?a) ^ fitted_upperarm(?a) ^ inserted_hand(?a)] ^ ~garment_grasped ^ ~interacted);
+    };
+
+    state-invariants {
+        forall_{?a: arm} [hand_reachable(?a) => hand_visible(?a)] ^ ((sum_{?a1: arm} [hand_reachable(?a)]) <= 1);
+    };
+
+    reward = if (~goal_reached ^ goal) then GOAL_REWARD
+             //else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force)]) then 5
+             else if (goal_reached) then 0
+             else if (~exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) | approachArmRear(?a, ?speed, ?force) | approachArmSide(?a, ?speed, ?force) | approachBothArms(?speed, ?force) | insertSleeveStraight(?a, ?speed, ?force) | insertSleeveFoldedFwd(?a, ?speed, ?force) | insertBothSleeves(?speed, ?force) | dragForearmStraight(?a, ?speed, ?force) | dragForearmFoldedFwd(?a, ?speed, ?force) | dragBothForearms(?speed, ?force) | dragUpperarm(?a, ?speed, ?force) | dragBothUpperarms(?speed, ?force) | finish | inform | requestReachable(?a) | requestVisible(?a) | goal]) then -2*GOAL_REWARD
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) ^ ((p_prox_torso == @high))]) then -10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @low))]) then 20
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmFrontal(?a, ?speed, ?force) ^ (LEFT_ARM(?a) ^ (p_motor_leftarm == @low))]) then 20
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @low))]) then -5
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) ^ (LEFT_ARM(?a) ^ (p_motor_leftarm == @low))]) then -5
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @high))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmRear(?a, ?speed, ?force) ^ (LEFT_ARM(?a) ^ (p_motor_leftarm == @high))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmSide(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmSide(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @med) | ((p_motor_rightarm == @low) ^ (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [approachArmSide(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ (p_motor_leftarm == @med)  | ((p_motor_rightarm == @low) ^ (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBothArms(?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBothArms(?speed, ?force) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low))]) then -10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBothArms(?speed, ?force) ^ ((p_motor_rightarm == @high) ^ (p_motor_leftarm == @high))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveFoldedFwd(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveFoldedFwd(?a, ?speed, ?force) ^ ((p_prox_torso == @high))]) then -5
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveFoldedFwd(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @low))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveFoldedFwd(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ (p_motor_leftarm == @low))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [insertSleeveStraight(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertBothSleeves(?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertBothSleeves(?speed, ?force) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low))]) then -10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [insertBothSleeves(?speed, ?force) ^ ((p_motor_rightarm == @high) ^ (p_motor_leftarm == @high))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) ^ ((p_prox_torso == @high))]) then -3
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ (p_motor_rightarm == @low))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ (p_motor_leftarm == @low))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmFoldedFwd(?a, ?speed, ?force) ^ ((?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) ^ ((?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragForearmStraight(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragBothForearms(?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragBothForearms(?speed, ?force) ^ ((?force == @low) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragBothForearms(?speed, ?force) ^ ((p_motor_rightarm == @high) ^ (p_motor_leftarm == @high))]) then 15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) ^ ((?force == @low) ^ ((RIGHT_ARM(?a) ^ p_motor_rightarm == @low) | (LEFT_ARM(?a) ^ p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) ^ (RIGHT_ARM(?a) ^ ((p_motor_rightarm == @med) | (p_motor_rightarm == @low)))]) then 10
+             else if (exists_{?a: arm, ?speed: t_threelevel, ?force: t_threelevel} [dragUpperarm(?a, ?speed, ?force) ^ (LEFT_ARM(?a)  ^ ((p_motor_leftarm == @med) | (p_motor_leftarm == @low)))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragBothUpperarms(?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [dragBothUpperarms(?speed, ?force) ^ ((?force == @low) ^ ((p_motor_rightarm == @low) | (p_motor_leftarm == @low)))]) then 10
+             else if (inform ^ (p_information_providing == @ip_always)) then 15
+             else if (inform ^ (p_information_providing == @ip_randomly)) then 0
+             else if (inform ^ (p_information_providing == @ip_never)) then -3
+             else if (inform ^ ((p_force == @high | p_speed == @high) ^ p_information_providing == @ip_wneeded)) then 5
+             else -1;
+}
