@@ -1,0 +1,20 @@
+non-fluents NF_NAME {
+    domain = DOMAIN;
+    objects {
+    };
+
+    non-fluents {
+    };
+}
+
+instance INSTANCE_NAME {
+    domain = DOMAIN;
+    non-fluents = NF_NAME;
+    
+    init-state {
+    };
+
+    max-nondef-actions = 1;
+    horizon  = 10;
+    discount = 1.0;
+}

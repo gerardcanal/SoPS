@@ -1,0 +1,224 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// A domain for autonomous user feeding.
+//
+// Author: Gerard Canal (gcanal@iri.upc.edu)
+// 
+///////////////////////////////////////////////////////////////////////////////
+
+domain feeding {
+    types {
+        type: object;
+
+        // Preference types
+        t_infoprov: {@ip_unknown, @ip_wneeded, @ip_randomly, @ip_always, @ip_never};
+        t_infoobt: { @io_unknown, @io_wuseful, @io_never, @io_wneeded };
+        t_petitions: { @p_unknown, @p_wdanger, @p_always, @p_never };
+        t_threelevel: { @tl_unknown, @low, @med, @high};
+    };
+
+    pvariables {
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // PREFERENCES
+        p_information_providing: { non-fluent, t_infoprov, default = @ip_unknown };
+        p_information_obtaining: { non-fluent, t_infoobt, default = @io_unknown };
+        p_petitions: { non-fluent, t_petitions, default = @p_unknown };
+        p_cogn_visiospatial: { non-fluent, bool, default = false };
+        p_cogn_language: { non-fluent, bool, default = false };
+        p_cogn_memory: { non-fluent, bool, default = false };
+        p_cogn_attention: { non-fluent, bool, default = false };
+        p_cogn_absraction: { non-fluent, bool, default = false };
+        p_cogn_orientation: { non-fluent, bool, default = false };
+        p_motor_head: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftarm: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftleg: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_rightfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_motor_leftfoot: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_prox_head: { non-fluent, t_threelevel, default = @tl_unknown }; // Distance in cm
+        p_prox_torso: { non-fluent, t_threelevel, default = @tl_unknown }; // Distance in cm
+        p_prox_rightarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftarm: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_leftleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_prox_rightleg: { non-fluent, real, default = 20 }; // Distance in cm
+        p_speed: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_force: { non-fluent, t_threelevel, default = @tl_unknown };
+        p_sb_extraversion: { non-fluent, bool, default = false };
+        p_sb_agreeableness: { non-fluent, bool, default = false };
+        p_sb_conscientiousness: { non-fluent, bool, default = false };
+        p_sb_neuroticism: { non-fluent, bool, default = false };
+        p_sb_openness: { non-fluent, bool, default = false };
+        p_pers_cadence: { non-fluent, t_threelevel, default = @tl_unknown };
+ 
+        //////////////////////////////////////////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Non-fluents
+        GOAL_REWARD: { non-fluent, real, default=50 };
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // State fluents
+    //N_SPOONFULS: { state-fluent, int, default=0 };
+        food_grasped:  { state-fluent, bool, default=false };
+        close_to_mouth:  { state-fluent, bool, default=false };
+        user_fed: { state-fluent, bool, default=false };
+        mouth_open: { state-fluent, bool, default=false };
+        //user_attending: { state-fluent, bool, default=false };
+        interacted: { state-fluent, bool, default=false }; // Either ask or inform
+        spoonful_completed:  { state-fluent, bool, default=false }; // ready to feed
+        //finished:  { state-fluent, bool, default=false }; // ready to feed
+
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // Action fluents
+        getFood(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        approachStraight(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachBelow(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        approachSide(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Feed without curving the spoon
+        feedStraight(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        feedScooping(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        // Waits for the user to grasp the food from the spoon without inserting it
+        waitForUserFeeding: { action-fluent, bool, default=false }; // no pref
+
+        moveAway(t_threelevel, t_threelevel): { action-fluent, bool, default=false }; // MP
+        
+        shortWaitBetweenFeeds: { action-fluent, bool, default=false }; // no pref
+        longWaitBetweenFeeds: { action-fluent, bool, default=false }; // no pref
+
+
+        //Interaction
+        inform: { action-fluent, bool, default=false };  // IP
+        requestMouthOpen: { action-fluent, bool, default=false };  // IP
+        //requestAttention: { action-fluent, bool, default=false };  // IP
+
+        // Goal simulation
+        goal: { action-fluent, bool, default=false };
+        goal_reached: { state-fluent, bool, default=false };
+
+
+        // Fluents to force that actions are different and selectable
+        sf_getFood(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachStraight(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachBelow(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_approachSide(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_feedStraight(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_feedScooping(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        //sf_waitForUserFeeding: { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        sf_moveAway(t_threelevel, t_threelevel): { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        npsf_shortWaitBetweenFeeds: { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+        npsf_longWaitBetweenFeeds: { state-fluent, bool, default=false }; // State-fluent to force different action effect for each action and avoid prunning
+    };
+    cpfs {
+        food_grasped' = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force)]) then true
+                        else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) | feedScooping(?speed, ?force) | waitForUserFeeding]) then false
+                        else food_grasped;
+
+        close_to_mouth' = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) | approachBelow(?speed, ?force) | approachSide(?speed, ?force)]) then true
+                          else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [moveAway(?speed, ?force)]) then false
+                          else close_to_mouth;
+
+        user_fed' = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) | feedScooping(?speed, ?force) | waitForUserFeeding]) then true
+                    else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force) | shortWaitBetweenFeeds | longWaitBetweenFeeds]) then false
+                    else user_fed;
+
+        mouth_open' = if (requestMouthOpen) then true
+                      else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) | approachBelow(?speed, ?force) | approachSide(?speed, ?force)]) then true // FIXME probabilistic?
+                      else mouth_open;
+        //user_attending' = if (requestAttention) then true
+        //                  else user_attending;
+
+        interacted' = if (inform | requestMouthOpen) then true
+                      else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) | approachBelow(?speed, ?force) | approachSide(?speed, ?force)]) then false
+                      else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force)]) then false
+                      else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) | feedScooping(?speed, ?force) | moveAway(?speed, ?force) | waitForUserFeeding | shortWaitBetweenFeeds | longWaitBetweenFeeds]) then false
+                      else interacted;
+
+        spoonful_completed' = if (exists_{?speed: t_threelevel, ?force: t_threelevel} [shortWaitBetweenFeeds | longWaitBetweenFeeds | moveAway(?speed, ?force)]) then true
+                              else spoonful_completed;
+        
+        //finished' = if (spoonful_completed ^ shortWaitBetweenFeeds | longWaitBetweenFeeds) then true
+        //            else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [spoonful_completed ^ moveAway(?speed, ?force)]) then true
+        //            else false;
+
+        goal_reached' = if (goal) then true else goal_reached;
+
+
+        // Workaround fluents
+        sf_getFood'(?speed, ?force) = getFood(?speed, ?force);
+        sf_approachStraight'(?speed, ?force) = approachStraight(?speed, ?force);
+        sf_approachBelow'(?speed, ?force) = approachBelow(?speed, ?force);
+        sf_approachSide'(?speed, ?force) = approachSide(?speed, ?force);
+        sf_feedStraight'(?speed, ?force) = feedStraight(?speed, ?force);
+        sf_feedScooping'(?speed, ?force) = feedScooping(?speed, ?force);
+        //sf_waitForUserFeeding' = waitForUserFeeding;
+        sf_moveAway'(?speed, ?force) = moveAway(?speed, ?force);
+        npsf_shortWaitBetweenFeeds' = shortWaitBetweenFeeds;
+        npsf_longWaitBetweenFeeds' = longWaitBetweenFeeds;
+    };
+
+    action-preconditions {
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force) => (~goal_reached ^ ~food_grasped ^ ~close_to_mouth)];
+
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) => (~goal_reached ^ food_grasped ^ ~close_to_mouth ^ ~user_fed)];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [approachBelow(?speed, ?force) => (~goal_reached ^ food_grasped ^ ~close_to_mouth ^ ~user_fed)];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [approachSide(?speed, ?force) => (~goal_reached ^ food_grasped ^ ~close_to_mouth ^ ~user_fed)];
+        
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) => (~goal_reached ^ close_to_mouth ^ ~user_fed)];
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [feedScooping(?speed, ?force) => (~goal_reached ^ close_to_mouth ^ ~user_fed)];
+        waitForUserFeeding => (~goal_reached ^ close_to_mouth ^ ~user_fed);
+        
+        forall_{?speed: t_threelevel, ?force: t_threelevel} [moveAway(?speed, ?force) => (~goal_reached ^ user_fed ^ close_to_mouth)];
+        
+        shortWaitBetweenFeeds => (~goal_reached ^ user_fed ^ ~close_to_mouth ^ ~interacted);
+        longWaitBetweenFeeds => (~goal_reached ^ user_fed ^ ~close_to_mouth ^ ~interacted);
+
+
+        inform => (~goal_reached ^ ~interacted);
+        requestMouthOpen => (~goal_reached ^ ~interacted ^ ~mouth_open); 
+        //requestAttention => (~goal_reached ^ ~interacted ^ ~user_attending); 
+
+        // Goal
+        //goal => (~goal_reached ^ finished ^ ~interacted); // Multiple feedings
+        goal => (~goal_reached ^ spoonful_completed ^ ~interacted); // only one spoonful
+    };
+
+    state-invariants {
+    };
+
+    reward = if (~goal_reached ^ goal) then GOAL_REWARD
+             else if (goal_reached) then 0
+             else if (spoonful_completed ^ exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force)]) then -5*GOAL_REWARD // Force 1 spoonful
+             else if (~exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force) | approachStraight(?speed, ?force) | approachBelow(?speed, ?force) | approachSide(?speed, ?force) | feedStraight(?speed, ?force) | feedScooping(?speed, ?force) | waitForUserFeeding | moveAway(?speed, ?force) | shortWaitBetweenFeeds | longWaitBetweenFeeds | inform | requestMouthOpen | goal]) then -2*GOAL_REWARD
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [getFood(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) ^ ((?speed == p_speed ^ p_speed ~= @high) ^ (?force == p_force) ^ (p_motor_head == @low))]) then 5
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) ^ ((p_prox_head == @high))]) then -3
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachStraight(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBelow(?speed, ?force) ^ ((?speed == p_speed ^ p_speed ~= @high) ^ (?force == p_force) ^ (p_motor_head == @med))]) then 5
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBelow(?speed, ?force) ^ ((p_prox_head == @high) ^ (p_motor_head == @low))]) then -3
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachBelow(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -5
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachSide(?speed, ?force) ^ ((?speed == p_speed ^ p_speed == @high) ^ (?force == p_force))]) then 5
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [approachSide(?speed, ?force) ^ ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedScooping(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedScooping(?speed, ?force) ^ ((?force ~= @low) ^ (p_motor_head == @low))]) then 15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedScooping(?speed, ?force) ^ ((p_prox_head == @high) ^ (p_motor_head ~= @low))]) then -5
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) ^ ((p_prox_head == @high) ^ (p_motor_head == @med))]) then 10
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [feedStraight(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (exists_{?speed: t_threelevel, ?force: t_threelevel} [moveAway(?speed, ?force) ^ (((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)))]) then -15
+             else if (waitForUserFeeding ^ ((p_motor_head == @low))) then -15
+             else if (waitForUserFeeding ^ ((p_prox_head == @high))) then 10
+             else if (longWaitBetweenFeeds ^ ((p_pers_cadence == @low) ^ (p_pers_cadence ~= @tl_unknown))) then 30
+             else if (longWaitBetweenFeeds ^ ((p_pers_cadence ~= @low) ^ (p_pers_cadence ~= @tl_unknown))) then -15
+             else if (shortWaitBetweenFeeds ^ ((p_pers_cadence == @med) ^ (p_pers_cadence ~= @tl_unknown))) then 30
+             else if (shortWaitBetweenFeeds ^ ((p_pers_cadence ~= @med) ^ (p_pers_cadence ~= @tl_unknown))) then -15
+             else if (inform ^ (p_information_providing == @ip_always)) then 15
+             else if (inform ^ (p_information_providing == @ip_randomly)) then 0
+             else if (inform ^ (p_information_providing == @ip_never)) then -3
+             else if (inform ^ ((p_force == @high | p_speed == @high) ^ (p_information_providing == @ip_wneeded))) then 5
+             else -1;
+
+
+}

@@ -1,0 +1,17 @@
+TYPES
+t_infoprov: @ip_unknown, @ip_wneeded, @ip_randomly, @ip_always, @ip_never
+t_infoobt: @io_unknown, @io_wuseful, @io_never, @io_wneeded
+t_petitions: @p_unknown, @p_wdanger, @p_always, @p_never
+t_threelevel: @tl_unknown, @low, @med, @high
+
+PREDICATES
+p_motor_rightleg: t_threelevel
+p_motor_leftleg: t_threelevel
+p_motor_rightfoot: t_threelevel
+p_motor_leftfoot: t_threelevel
+p_speed: t_threelevel
+p_force: t_threelevel
+p_information_providing: t_infoprov
+p_petitions: t_petitions
+p_motor_rightarm: t_threelevel
+p_motor_leftarm: t_threelevel

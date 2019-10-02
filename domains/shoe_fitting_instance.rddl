@@ -1,0 +1,37 @@
+non-fluents shoe_nf {
+    domain = shoe_fitting;
+    objects {
+        shoe: {left_shoe, right_shoe};
+        foot: {left_foot, right_foot};
+    };
+
+    non-fluents {
+        GOAL_REWARD = 50;
+        CORRECT_SHOE(left_shoe, left_foot);
+        CORRECT_SHOE(right_shoe, right_foot);
+        RIGHT_FOOT(right_foot) = true;
+        LEFT_FOOT(left_foot) = true;
+
+        // Preferences definition
+        //p_motor_rightleg = @med;
+        //p_motor_leftleg = @med;
+        //p_information_providing = @ip_wneeded;
+    };
+}
+
+instance shoe_fitting__instance {
+    domain = shoe_fitting;
+    non-fluents = shoe_nf;
+    
+    init-state {
+        //shoe_grasped(right_shoe) = true;
+        foot_reachable(right_foot) = true;
+        foot_reachable(left_foot) = true;
+        foot_visible(left_foot) = true;
+        foot_visible(right_foot) = true;
+    };
+
+    max-nondef-actions = 1;
+    horizon  = 16;
+    discount = 1.0;
+}

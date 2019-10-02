@@ -1,0 +1,46 @@
+getFood, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+
+approachStraight, (?speed == p_speed ^ p_speed ~= @high) ^ (?force == p_force) ^ (p_motor_head == @low), 5
+approachStraight, (p_prox_head == @high), -3
+approachStraight, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+
+approachBelow, (?speed == p_speed ^ p_speed ~= @high) ^ (?force == p_force) ^ (p_motor_head == @med), 5
+approachBelow, (p_prox_head == @high) ^ (p_motor_head == @low), -3
+approachBelow, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -5
+
+approachSide, (?speed == p_speed ^ p_speed == @high) ^ (?force == p_force), 5
+approachSide, (?speed ~= p_speed) ^ (p_speed ~= @tl_unknown) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+
+feedScooping, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+feedScooping, (?force ~= @low) ^ (p_motor_head == @low), 15
+feedScooping, (p_prox_head == @high) ^ (p_motor_head ~= @low), -5
+
+feedStraight, (p_prox_head == @high) ^ (p_motor_head == @med), 10
+feedStraight, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+
+moveAway, ((?speed ~= p_speed) ^ (p_speed ~= @tl_unknown)) | ((?force ~= p_force) ^ (p_force ~= @tl_unknown)), -15
+
+waitForUserFeeding, (p_motor_head == @low), -15
+waitForUserFeeding, (p_prox_head == @high), 10
+
+longWaitBetweenFeeds, (p_pers_cadence == @low) ^ (p_pers_cadence ~= @tl_unknown), 30
+longWaitBetweenFeeds, (p_pers_cadence ~= @low) ^ (p_pers_cadence ~= @tl_unknown), -15
+
+shortWaitBetweenFeeds, (p_pers_cadence == @med) ^ (p_pers_cadence ~= @tl_unknown), 30
+shortWaitBetweenFeeds, (p_pers_cadence ~= @med) ^ (p_pers_cadence ~= @tl_unknown), -15
+//shortWaitBetweenFeeds, (p_pers_cadence ~= @med) ^ (?cadence == p_pers_cadence) ^ (p_pers_cadence ~= @tl_unknown), -15
+
+
+inform, p_information_providing == @ip_always, 15
+inform, p_information_providing == @ip_randomly, 0
+inform, p_information_providing == @ip_never, -3
+inform, (p_force == @high | p_speed == @high) ^ (p_information_providing == @ip_wneeded), 5
+
+
+-------------
+p_motor_head
+p_speed
+p_force
+p_information_providing
+p_pers_cadence?
+p_prox_head -> high means i need a lot of space (want the robot far), low means i can stand the robot near
