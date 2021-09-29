@@ -79,9 +79,9 @@ def plot(data, plot_path, show=True, std=False, title='Results PSS-change %s dom
 
 
 if __name__ == '__main__':
-    domains = {'Jacket dressing': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_jacket_results.txt',
-               'Shoe fitting': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_shoe_results.txt',
-               'Assistive feeding': '/home/gcanal/Dropbox/PrefsIROS19/final_results/changes_feeding_results.txt'}
+    domains = {'Jacket dressing': 'final_results/changes_jacket_results.txt',
+               'Shoe fitting': 'final_results/changes_shoe_results.txt',
+               'Assistive feeding': 'final_results/changes_feeding_results.txt'}
 
     for DOMAIN_NAME, path in domains.iteritems():
         data = parse_csv(path)

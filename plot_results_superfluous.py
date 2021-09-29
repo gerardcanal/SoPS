@@ -110,9 +110,9 @@ def plot(data, plot_path, show=True, std=False, ):
 
 if __name__ == '__main__':
 
-    data_feeding = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_feeding_results.txt'))
-    data_jacket = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_jacket_dressing_results.txt'))
-    data_shoe = prepare_data(parse_csv('/home/gcanal/Dropbox/PrefsIROS19/superfluous_shoe_results.txt'))
+    data_feeding = prepare_data(parse_csv('final_results/superfluous_feeding_results.txt'))
+    data_jacket = prepare_data(parse_csv('final_results/superfluous_jacket_dressing_results.txt'))
+    data_shoe = prepare_data(parse_csv('superfluous_shoe_results.txt'))
 
     data = {'Shoe fitting': data_shoe['PSS'], 'Jacket dressing': data_jacket['PSS'], 'Feeding': data_feeding['PSS']}
     plot(data, plot_path=os.getcwd()+"/superflous_results.svg")

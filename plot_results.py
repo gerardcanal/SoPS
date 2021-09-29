@@ -117,29 +117,29 @@ def plot(data, plot_path, show=True, std=False, title='Results %s domain' % DOMA
 
 if __name__ == '__main__':
     ## Shoe
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results_rdn15_10.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_shoe_results_rdn50x20.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt'
+    # path = 'shoe_results_rdn15_10.txt'
+    # path = 'final_shoe_results_rdn50x20.txt'
+    # path = 'shoe_results.txt'
+    # path = 'final_results/shoe_results.txt'
     # #path = '/tmp/shoe_results.txt'
-    # #data2 = parse_csv('/home/gcanal/Dropbox/PrefsIROS19/shoe_results.txt')
+    # #data2 = parse_csv('shoe_results.txt')
     # #data = join(data, data2)
     # #data.update(data2)
     #
     # ## Jacket
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt'
+    # path = 'final_results/jacket_dressing_results.txt'
     #
     # ## feeding
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_feeding_results.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/final_results/superfluous_jacket_dressing_results_FIRST.txt'
-    # path = '/home/gcanal/Dropbox/PrefsIROS19/superfluous_jacket_dressing_results.txt'
-    #path = '/home/gcanal/Dropbox/PrefsIROS19/superfluous_shoe_results.txt'
+    # path = 'final_results/feeding_results.txt'
+    # path = 'final_results/superfluous_feeding_results.txt'
+    # path = 'final_results/superfluous_jacket_dressing_results_FIRST.txt'
+    # path = 'superfluous_jacket_dressing_results.txt'
+    #path = 'superfluous_shoe_results.txt'
 
 
-    domains = {'Jacket dressing': '/home/gcanal/Dropbox/PrefsIROS19/final_results/jacket_dressing_results.txt',
-               'Shoe fitting': '/home/gcanal/Dropbox/PrefsIROS19/final_results/shoe_results.txt',
-               'Assistive feeding': '/home/gcanal/Dropbox/PrefsIROS19/final_results/feeding_results.txt'}
+    domains = {'Jacket dressing': 'final_results/jacket_dressing_results.txt',
+               'Shoe fitting': 'final_results/shoe_results.txt',
+               'Assistive feeding': 'final_results/feeding_results.txt'}
 
     for DOMAIN_NAME, path in domains.iteritems():
         data = parse_csv(path)
